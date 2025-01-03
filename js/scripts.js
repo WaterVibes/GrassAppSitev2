@@ -30,18 +30,18 @@ const introMarkerData = {
     }
 };
 
-// Set initial camera position from intro marker
+// Set initial camera position from intro marker with correct orientation
 camera.position.set(
     parseFloat(introMarkerData.camera.x),
-    parseFloat(introMarkerData.camera.y),
-    parseFloat(introMarkerData.camera.z)
+    parseFloat(introMarkerData.camera.z), // Swap Y and Z for correct orientation
+    parseFloat(introMarkerData.camera.y)
 );
 
-// Set initial camera target
+// Set initial camera target with correct orientation
 const initialTarget = new THREE.Vector3(
     parseFloat(introMarkerData.target.x),
-    parseFloat(introMarkerData.target.y),
-    parseFloat(introMarkerData.target.z)
+    parseFloat(introMarkerData.target.z), // Swap Y and Z for correct orientation
+    parseFloat(introMarkerData.target.y)
 );
 camera.lookAt(initialTarget);
 
@@ -212,15 +212,15 @@ async function createMarker(data, color = 0x00ff00) {
     if (!markerData) return;
 
     // Create marker geometry
-    const markerGeometry = new THREE.SphereGeometry(5, 16, 16);
+    const markerGeometry = new THREE.SphereGeometry(10, 16, 16); // Increased size for better visibility
     const markerMaterial = new THREE.MeshBasicMaterial({ color });
     const marker = new THREE.Mesh(markerGeometry, markerMaterial);
     
-    // Set position from marker data
+    // Set position from marker data with correct orientation
     marker.position.set(
         parseFloat(markerData.subject.x),
-        parseFloat(markerData.subject.y),
-        parseFloat(markerData.subject.z)
+        parseFloat(markerData.subject.z), // Swap Y and Z for correct orientation
+        parseFloat(markerData.subject.y)
     );
     scene.add(marker);
 
@@ -239,16 +239,16 @@ async function createMarker(data, color = 0x00ff00) {
     labelDiv.onclick = async () => {
         const cameraData = await loadMarkerData(data.cameraFile);
         if (cameraData) {
-            // Create camera position and target vectors
+            // Create camera position and target vectors with correct orientation
             const targetPos = new THREE.Vector3(
                 parseFloat(cameraData.target.x),
-                parseFloat(cameraData.target.y),
-                parseFloat(cameraData.target.z)
+                parseFloat(cameraData.target.z), // Swap Y and Z for correct orientation
+                parseFloat(cameraData.target.y)
             );
             const cameraPos = new THREE.Vector3(
                 parseFloat(cameraData.camera.x),
-                parseFloat(cameraData.camera.y),
-                parseFloat(cameraData.camera.z)
+                parseFloat(cameraData.camera.z), // Swap Y and Z for correct orientation
+                parseFloat(cameraData.camera.y)
             );
 
             // Animate camera movement
@@ -350,9 +350,9 @@ try {
             console.log('Model loaded successfully');
             const model = gltf.scene;
             
-            // Ensure model is visible
+            // Ensure model is visible and correctly oriented
             model.scale.set(1, 1, 1);
-            model.rotation.x = -Math.PI / 2;
+            model.rotation.x = 0; // Remove rotation since we're handling it in the camera/marker positions
             
             // Improve material settings
             model.traverse((node) => {
