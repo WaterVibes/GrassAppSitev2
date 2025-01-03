@@ -43,6 +43,30 @@ const districts = [
     }
 ];
 
+// Page markers with their camera positions
+const pages = [
+    {
+        name: 'About Us',
+        markerFile: 'marker_about_us_subject__subject_marker_1735199597502.json',
+        cameraFile: 'marker_about_us_camera_camera_marker_1735199541761.json'
+    },
+    {
+        name: 'Medical Patient',
+        markerFile: 'marker_medical_patient_subject_marker_1735199228409.json',
+        cameraFile: 'marker_medical_patient_camera_camera_marker_1735199161321.json'
+    },
+    {
+        name: 'Partner With Us',
+        markerFile: 'marker_partnership_subject__subject_marker_1735199019215.json',
+        cameraFile: 'marker_partnership_camera_marker_1735198971796.json'
+    },
+    {
+        name: 'Delivery Driver',
+        markerFile: 'marker_delivery_driver_subject_subject_marker_1735200573413.json',
+        cameraFile: 'marker_deliverydrivers_camera_marker_1735200540288.json'
+    }
+];
+
 // Function to load marker data
 async function loadMarkerData(markerFile) {
     try {
@@ -52,6 +76,84 @@ async function loadMarkerData(markerFile) {
     } catch (error) {
         console.error(`Error loading marker data from ${markerFile}:`, error);
         return null;
+    }
+}
+
+// Function to create a marker and label
+async function createMarker(data, color = 0x00ff00) {
+    const markerData = await loadMarkerData(data.markerFile);
+    if (!markerData) return;
+
+    // Create marker geometry
+    const markerGeometry = new THREE.SphereGeometry(5, 16, 16);
+    const markerMaterial = new THREE.MeshBasicMaterial({ color });
+    const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+    
+    // Set position from marker data
+    marker.position.set(
+        parseFloat(markerData.subject.x),
+        parseFloat(markerData.subject.y),
+        parseFloat(markerData.subject.z)
+    );
+    scene.add(marker);
+
+    // Create label
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'district-label';
+    labelDiv.textContent = data.name;
+    labelDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    labelDiv.style.color = 'white';
+    labelDiv.style.padding = '5px 10px';
+    labelDiv.style.borderRadius = '5px';
+    labelDiv.style.fontSize = '14px';
+    
+    // Make label clickable
+    labelDiv.style.cursor = 'pointer';
+    labelDiv.onclick = async () => {
+        const cameraData = await loadMarkerData(data.cameraFile);
+        if (cameraData) {
+            // Create camera position and target vectors
+            const targetPos = new THREE.Vector3(
+                parseFloat(cameraData.target.x),
+                parseFloat(cameraData.target.y),
+                parseFloat(cameraData.target.z)
+            );
+            const cameraPos = new THREE.Vector3(
+                parseFloat(cameraData.camera.x),
+                parseFloat(cameraData.camera.y),
+                parseFloat(cameraData.camera.z)
+            );
+
+            // Animate camera movement
+            new TWEEN.Tween(camera.position)
+                .to(cameraPos, 1000)
+                .easing(TWEEN.Easing.Cubic.InOut)
+                .start();
+
+            // Animate controls target
+            new TWEEN.Tween(controls.target)
+                .to(targetPos, 1000)
+                .easing(TWEEN.Easing.Cubic.InOut)
+                .start();
+        }
+    };
+
+    const label = new CSS2DObject(labelDiv);
+    label.position.copy(marker.position);
+    label.position.y += 20; // Offset label above marker
+    scene.add(label);
+}
+
+// Function to create all markers
+async function createAllMarkers() {
+    // Create district markers (green)
+    for (const district of districts) {
+        await createMarker(district, 0x00ff00);
+    }
+    
+    // Create page markers (blue)
+    for (const page of pages) {
+        await createMarker(page, 0x0000ff);
     }
 }
 
@@ -81,73 +183,6 @@ try {
     labelRenderer.domElement.style.pointerEvents = 'none';
     document.body.appendChild(labelRenderer.domElement);
 
-    // Function to create district markers
-    async function createDistrictMarkers() {
-        for (const district of districts) {
-            const markerData = await loadMarkerData(district.markerFile);
-            if (!markerData) continue;
-
-            // Create marker geometry
-            const markerGeometry = new THREE.SphereGeometry(5, 16, 16);
-            const markerMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-            const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-            
-            // Set position from marker data
-            marker.position.set(
-                parseFloat(markerData.subject.x),
-                parseFloat(markerData.subject.y),
-                parseFloat(markerData.subject.z)
-            );
-            scene.add(marker);
-
-            // Create label
-            const labelDiv = document.createElement('div');
-            labelDiv.className = 'district-label';
-            labelDiv.textContent = district.name;
-            labelDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-            labelDiv.style.color = 'white';
-            labelDiv.style.padding = '5px 10px';
-            labelDiv.style.borderRadius = '5px';
-            labelDiv.style.fontSize = '14px';
-            
-            // Make label clickable
-            labelDiv.style.cursor = 'pointer';
-            labelDiv.onclick = async () => {
-                const cameraData = await loadMarkerData(district.cameraFile);
-                if (cameraData) {
-                    // Create camera position and target vectors
-                    const targetPos = new THREE.Vector3(
-                        parseFloat(cameraData.target.x),
-                        parseFloat(cameraData.target.y),
-                        parseFloat(cameraData.target.z)
-                    );
-                    const cameraPos = new THREE.Vector3(
-                        parseFloat(cameraData.camera.x),
-                        parseFloat(cameraData.camera.y),
-                        parseFloat(cameraData.camera.z)
-                    );
-
-                    // Animate camera movement
-                    new TWEEN.Tween(camera.position)
-                        .to(cameraPos, 1000)
-                        .easing(TWEEN.Easing.Cubic.InOut)
-                        .start();
-
-                    // Animate controls target
-                    new TWEEN.Tween(controls.target)
-                        .to(targetPos, 1000)
-                        .easing(TWEEN.Easing.Cubic.InOut)
-                        .start();
-                }
-            };
-
-            const label = new CSS2DObject(labelDiv);
-            label.position.copy(marker.position);
-            label.position.y += 20; // Offset label above marker
-            scene.add(label);
-        }
-    }
-
     // Initialize loaders
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath('https://unpkg.com/three@0.158.0/examples/jsm/libs/draco/');
@@ -165,7 +200,7 @@ try {
         (gltf) => {
             console.log('Model loaded successfully');
             scene.add(gltf.scene);
-            createDistrictMarkers(); // Add markers after model is loaded
+            createAllMarkers(); // Add all markers after model is loaded
             
             // Hide loading screen
             if (loadingScreen) {
