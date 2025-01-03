@@ -180,7 +180,7 @@ try {
     labelRenderer.setSize(window.innerWidth, window.innerHeight);
     labelRenderer.domElement.style.position = 'absolute';
     labelRenderer.domElement.style.top = '0';
-    labelRenderer.domElement.style.pointerEvents = 'none';
+    labelRenderer.domElement.style.pointerEvents = 'auto';
     document.body.appendChild(labelRenderer.domElement);
 
     // Initialize loaders
