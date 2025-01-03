@@ -7,6 +7,7 @@ import * as TWEEN from '@tweenjs/tween.js';
 
 // Global variables
 let scene, camera, renderer, labelRenderer, controls;
+let currentCardIndex = 0;
 
 // Make functions available globally immediately
 window.selectDistrict = selectDistrictImpl;
