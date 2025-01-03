@@ -28,9 +28,7 @@ try {
 
     // Initialize loaders
     const dracoLoader = new DRACOLoader();
-    const decoderPath = new URL('/GrassAppSitev2/draco-decoder/', window.location.origin).href;
-    console.log('Setting Draco decoder path:', decoderPath);
-    dracoLoader.setDecoderPath(decoderPath);
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
     dracoLoader.setDecoderConfig({ type: 'js' }); // Explicitly use JS decoder
 
     const gltfLoader = new GLTFLoader();
