@@ -28,7 +28,8 @@ try {
 
     // Initialize loaders
     const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+    dracoLoader.setDecoderPath('https://unpkg.com/three@0.158.0/examples/jsm/libs/draco/');
+    dracoLoader.preload();  // Preload the decoder
     dracoLoader.setDecoderConfig({ type: 'js' }); // Explicitly use JS decoder
 
     const gltfLoader = new GLTFLoader();
