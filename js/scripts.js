@@ -14,19 +14,19 @@ const loadingProgress = document.querySelector('.loading-progress');
 
 // Initialize scene and camera
 scene = new THREE.Scene();
-camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 20000);
+camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 20000);
 
 // Set initial camera position from intro marker
 const introMarkerData = {
     camera: {
-        x: "196.97",
-        y: "630.37",
-        z: "156.96"
+        x: "0",
+        y: "1000",
+        z: "1000"
     },
     target: {
-        x: "191.44",
-        y: "622.32",
-        z: "154.81"
+        x: "0",
+        y: "0",
+        z: "0"
     }
 };
 
@@ -75,22 +75,34 @@ labelRenderer.domElement.style.pointerEvents = 'auto';
 document.body.appendChild(labelRenderer.domElement);
 
 // Add lights for better visibility
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
-directionalLight.position.set(1000, 1000, 1000);
-directionalLight.castShadow = true;
-scene.add(directionalLight);
+// Add multiple directional lights for better coverage
+const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight1.position.set(1000, 1000, 1000);
+scene.add(directionalLight1);
 
-// Add point lights at key positions
-const pointLight1 = new THREE.PointLight(0xffffff, 1, 2000);
-pointLight1.position.set(500, 500, 500);
+const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight2.position.set(-1000, 1000, -1000);
+scene.add(directionalLight2);
+
+const directionalLight3 = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight3.position.set(0, 1000, 0);
+scene.add(directionalLight3);
+
+// Remove old point lights and add new ones at strategic positions
+const pointLight1 = new THREE.PointLight(0xffffff, 0.8, 2000);
+pointLight1.position.set(500, 800, 500);
 scene.add(pointLight1);
 
-const pointLight2 = new THREE.PointLight(0xffffff, 1, 2000);
-pointLight2.position.set(-500, 500, -500);
+const pointLight2 = new THREE.PointLight(0xffffff, 0.8, 2000);
+pointLight2.position.set(-500, 800, -500);
 scene.add(pointLight2);
+
+const pointLight3 = new THREE.PointLight(0xffffff, 0.8, 2000);
+pointLight3.position.set(0, 800, 0);
+scene.add(pointLight3);
 
 // Initialize controls with adjusted constraints
 controls = new OrbitControls(camera, renderer.domElement);
@@ -195,25 +207,37 @@ async function loadMarkerData(markerFile) {
         const response = await fetch(`markers/${markerFile}`);
         const data = await response.json();
         
-        // Swap Y and Z coordinates for camera positions
+        // Scale factor to adjust marker positions
+        const scale = 0.5;  // Adjust this value to scale marker positions
+        
+        // Transform coordinates for camera positions
         if (data.camera) {
-            const oldY = data.camera.y;
-            data.camera.y = data.camera.z;
-            data.camera.z = oldY;
+            const x = parseFloat(data.camera.x) * scale;
+            const y = parseFloat(data.camera.z) * scale;  // Use z for height
+            const z = parseFloat(data.camera.y) * scale;  // Use y for depth
+            data.camera.x = x.toString();
+            data.camera.y = y.toString();
+            data.camera.z = z.toString();
         }
         
-        // Swap Y and Z coordinates for target positions
+        // Transform coordinates for target positions
         if (data.target) {
-            const oldY = data.target.y;
-            data.target.y = data.target.z;
-            data.target.z = oldY;
+            const x = parseFloat(data.target.x) * scale;
+            const y = parseFloat(data.target.z) * scale;  // Use z for height
+            const z = parseFloat(data.target.y) * scale;  // Use y for depth
+            data.target.x = x.toString();
+            data.target.y = y.toString();
+            data.target.z = z.toString();
         }
         
-        // Swap Y and Z coordinates for subject positions
+        // Transform coordinates for subject positions
         if (data.subject) {
-            const oldY = data.subject.y;
-            data.subject.y = data.subject.z;
-            data.subject.z = oldY;
+            const x = parseFloat(data.subject.x) * scale;
+            const y = parseFloat(data.subject.z) * scale;  // Use z for height
+            const z = parseFloat(data.subject.y) * scale;  // Use y for depth
+            data.subject.x = x.toString();
+            data.subject.y = y.toString();
+            data.subject.z = z.toString();
         }
         
         return data;
@@ -228,20 +252,20 @@ async function createMarker(data, color = 0x00ff00) {
     const markerData = await loadMarkerData(data.markerFile);
     if (!markerData) return;
 
-    // Create marker geometry
-    const markerGeometry = new THREE.SphereGeometry(10, 16, 16);
+    // Create marker geometry with smaller size
+    const markerGeometry = new THREE.SphereGeometry(5, 16, 16);  // Reduced size from 10 to 5
     const markerMaterial = new THREE.MeshBasicMaterial({ color });
     const marker = new THREE.Mesh(markerGeometry, markerMaterial);
     
-    // Set position from marker data with correct orientation
+    // Set position from marker data
     marker.position.set(
         parseFloat(markerData.subject.x),
-        parseFloat(markerData.subject.z),
-        parseFloat(markerData.subject.y)
+        parseFloat(markerData.subject.y),
+        parseFloat(markerData.subject.z)
     );
     scene.add(marker);
 
-    // Create label
+    // Create label with adjusted position
     const labelDiv = document.createElement('div');
     labelDiv.className = 'district-label';
     labelDiv.textContent = data.name;
@@ -250,13 +274,18 @@ async function createMarker(data, color = 0x00ff00) {
     labelDiv.style.padding = '5px 10px';
     labelDiv.style.borderRadius = '5px';
     labelDiv.style.fontSize = '14px';
-    
-    // Make label clickable
+    labelDiv.style.pointerEvents = 'auto';
     labelDiv.style.cursor = 'pointer';
+    
+    const label = new CSS2DObject(labelDiv);
+    label.position.copy(marker.position);
+    label.position.y += 10;  // Reduced offset from 20 to 10
+    scene.add(label);
+    
+    // Make label clickable with adjusted camera movement
     labelDiv.onclick = async () => {
         const cameraData = await loadMarkerData(data.cameraFile);
         if (cameraData) {
-            // Create camera position and target vectors with correct orientation
             const targetPos = new THREE.Vector3(
                 parseFloat(cameraData.target.x),
                 parseFloat(cameraData.target.y),
@@ -268,24 +297,18 @@ async function createMarker(data, color = 0x00ff00) {
                 parseFloat(cameraData.camera.z)
             );
 
-            // Animate camera movement
+            // Smoother camera movement
             new TWEEN.Tween(camera.position)
-                .to(cameraPos, 1000)
+                .to(cameraPos, 1500)  // Increased duration to 1500ms
                 .easing(TWEEN.Easing.Cubic.InOut)
                 .start();
 
-            // Animate controls target
             new TWEEN.Tween(controls.target)
-                .to(targetPos, 1000)
+                .to(targetPos, 1500)  // Increased duration to 1500ms
                 .easing(TWEEN.Easing.Cubic.InOut)
                 .start();
         }
     };
-
-    const label = new CSS2DObject(labelDiv);
-    label.position.copy(marker.position);
-    label.position.y += 20;
-    scene.add(label);
 }
 
 // Function to create all markers
