@@ -56,26 +56,35 @@ const initialTarget = new THREE.Vector3(
 );
 camera.lookAt(initialTarget);
 
-// Update fog settings for better performance
+// Update fog settings for better immersion
 const fogColor = 0x000000;
-const fogNear = 1200;
+const fogNear = 800;  // Start fog closer
 const fogFar = 1500;
 scene.fog = new THREE.Fog(fogColor, fogNear, fogFar);
 
-// Optimize fog update function to be circular and follow camera
+// Enhanced fog update function for better immersion
 function updateFog() {
     const distanceFromCenter = Math.sqrt(
         camera.position.x * camera.position.x + 
         camera.position.z * camera.position.z
     );
     
-    // Calculate fog based on radial distance
-    if (distanceFromCenter > 800) {  // Start fog earlier for smoother transition
-        const fogIntensity = (distanceFromCenter - 800) / 400;  // Gradual increase
-        scene.fog.near = 1200 - (fogIntensity * 400);  // Fog starts closer as you move out
-        scene.fog.far = 1500 - (fogIntensity * 200);   // Fog ends sooner as you move out
+    // Calculate height-based fog
+    const heightFactor = Math.max(0, Math.min(1, camera.position.y / 1000));
+    
+    // Calculate distance-based fog
+    const distanceFactor = Math.max(0, Math.min(1, distanceFromCenter / 1000));
+    
+    // Combine both factors for dynamic fog
+    const fogFactor = Math.max(heightFactor, distanceFactor);
+    
+    // Apply fog based on combined factors
+    if (fogFactor > 0.3) {  // Start fog effect earlier
+        const intensity = (fogFactor - 0.3) / 0.7;  // Normalize to 0-1 range
+        scene.fog.near = 800 - (intensity * 400);   // Fog starts closer as factors increase
+        scene.fog.far = 1500 - (intensity * 500);   // Fog ends sooner as factors increase
     } else {
-        scene.fog.near = 1500;  // No fog when close to center
+        scene.fog.near = 1000;  // Default fog distance when close to center and low
         scene.fog.far = 2000;
     }
 }
@@ -503,23 +512,19 @@ function showInfoCard(pageName) {
     }
 
     const cardInfo = pageInfo.cards[currentCardIndex];
+    const isMobile = isMobileDevice();  // Ensure we use isMobile consistently
 
     // Create card container with mobile-responsive styles
     const card = document.createElement('div');
     card.className = 'info-card';
     
-    // Adjust card positioning and size based on device
-    const isMobile = isMobileDevice();
-    const cardWidth = isMobile ? '90%' : '350px';  // Reduced from 100% on mobile
-    const cardMargin = isMobile ? '0 5%' : '0';    // Center card on mobile
-
     card.style.cssText = `
         position: fixed;
         ${isMobile ? 'bottom: -100%;' : 'right: -400px;'}
-        ${isMobile ? `left: ${cardMargin};` : 'top: 50%;'}
-        width: ${cardWidth};
+        ${isMobile ? 'left: 5%;' : 'top: 50%;'}
+        width: ${isMobile ? '90%' : '350px'};
         ${isMobile ? '' : 'transform: translateY(-50%);'}
-        background: rgba(0, 0, 0, 0.9);  // Increased opacity for better readability
+        background: rgba(0, 0, 0, 0.9);
         backdrop-filter: blur(10px);
         border-radius: ${isMobile ? '20px 20px 0 0' : '20px'};
         padding: ${isMobile ? '20px' : '25px'};
@@ -529,9 +534,9 @@ function showInfoCard(pageName) {
         transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         z-index: 1000;
         opacity: 0;
-        max-height: ${isMobile ? '80vh' : 'none'};  // Increased from 70vh
-        overflow-y: ${iMobile ? 'auto' : 'visible'};
-        -webkit-overflow-scrolling: touch;  // Smooth scrolling on iOS
+        max-height: ${isMobile ? '80vh' : 'none'};
+        overflow-y: ${isMobile ? 'auto' : 'visible'};
+        -webkit-overflow-scrolling: touch;
     `;
 
     // Create icon with adjusted size for mobile
@@ -539,8 +544,8 @@ function showInfoCard(pageName) {
     icon.className = 'card-icon';
     icon.textContent = cardInfo.icon;
     icon.style.cssText = `
-        font-size: ${isMobile ? '42px' : '48px'};  // Increased from 36px
-        margin-bottom: ${iMobile ? '15px' : '20px'};  // Increased margins
+        font-size: ${isMobile ? '42px' : '48px'};
+        margin-bottom: ${isMobile ? '15px' : '20px'};
         animation: floatIcon 3s ease-in-out infinite;
         text-align: center;
     `;
@@ -549,8 +554,8 @@ function showInfoCard(pageName) {
     const title = document.createElement('h2');
     title.textContent = cardInfo.title;
     title.style.cssText = `
-        font-size: ${iMobile ? '22px' : '24px'};  // Increased from 20px
-        margin-bottom: ${iMobile ? '15px' : '20px'};
+        font-size: ${isMobile ? '22px' : '24px'};
+        margin-bottom: ${isMobile ? '15px' : '20px'};
         color: #00ff00;
         font-weight: bold;
         text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
@@ -561,10 +566,10 @@ function showInfoCard(pageName) {
     const content = document.createElement('p');
     content.textContent = cardInfo.content;
     content.style.cssText = `
-        font-size: ${iMobile ? '16px' : '16px'};  // Increased from 14px
-        line-height: 1.8;  // Increased from 1.6
-        margin-bottom: ${iMobile ? '20px' : '25px'};
-        color: rgba(255, 255, 255, 0.95);  // Increased opacity
+        font-size: ${isMobile ? '16px' : '16px'};
+        line-height: 1.8;
+        margin-bottom: ${isMobile ? '20px' : '25px'};
+        color: rgba(255, 255, 255, 0.95);
         text-align: justify;
         padding: 0 10px;
     `;
@@ -577,16 +582,16 @@ function showInfoCard(pageName) {
         link.target = '_blank';
         link.style.cssText = `
             display: block;  // Changed to block for full width on mobile
-            width: ${iMobile ? '80%' : 'auto'};  // Control width on mobile
-            margin: ${iMobile ? '0 auto' : '0'};  // Center on mobile
-            padding: ${iMobile ? '12px 0' : '10px 20px'};  // Adjusted padding
+            width: ${isMobile ? '80%' : 'auto'};  // Control width on mobile
+            margin: ${isMobile ? '0 auto' : '0'};  // Center on mobile
+            padding: ${isMobile ? '12px 0' : '10px 20px'};  // Adjusted padding
             background: linear-gradient(45deg, #00ff00, #00cc00);
             color: black;
             text-decoration: none;
             border-radius: 25px;
             font-weight: bold;
             text-align: center;
-            font-size: ${iMobile ? '16px' : '16px'};  // Increased from 14px
+            font-size: ${isMobile ? '16px' : '16px'};  // Increased from 14px
             transition: all 0.3s ease;
             box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
         `;
@@ -606,17 +611,17 @@ function showInfoCard(pageName) {
     closeBtn.textContent = isMobile ? 'Close' : '×';
     closeBtn.style.cssText = `
         position: absolute;
-        ${iMobile ? 'bottom: 15px;' : 'top: 15px;'}  // Increased from 10px
-        ${iMobile ? 'left: 50%;' : 'right: 15px;'}
-        ${iMobile ? 'transform: translateX(-50%);' : ''}
-        background: ${iMobile ? 'linear-gradient(45deg, #00ff00, #00cc00)' : 'none'};
+        ${isMobile ? 'bottom: 15px;' : 'top: 15px;'}  // Increased from 10px
+        ${isMobile ? 'left: 50%;' : 'right: 15px;'}
+        ${isMobile ? 'transform: translateX(-50%);' : ''}
+        background: ${isMobile ? 'linear-gradient(45deg, #00ff00, #00cc00)' : 'none'};
         border: none;
-        color: ${iMobile ? 'black' : 'white'};
-        font-size: ${iMobile ? '16px' : '24px'};
+        color: ${isMobile ? 'black' : 'white'};
+        font-size: ${isMobile ? '16px' : '24px'};
         cursor: pointer;
-        padding: ${iMobile ? '12px 30px' : '0'};  // Increased padding
-        ${iMobile ? 'width: 140px;' : 'width: 30px; height: 30px;'}  // Increased width
-        border-radius: ${iMobile ? '25px' : '50%'};
+        padding: ${isMobile ? '12px 30px' : '0'};  // Increased padding
+        ${isMobile ? 'width: 140px;' : 'width: 30px; height: 30px;'}  // Increased width
+        border-radius: ${isMobile ? '25px' : '50%'};
         transition: all 0.3s ease;
         font-weight: bold;
     `;
