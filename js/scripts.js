@@ -376,7 +376,180 @@ async function selectDistrictImpl(districtName) {
     }
 }
 
-// Function to show a page with smooth transition
+// Add page content data
+const pageContent = {
+    aboutUs: {
+        title: "GrassApp: Delivery for the Culture",
+        content: "GrassApp bridges Baltimore's cannabis community with licensed dispensaries, offering a seamless, tech-forward delivery experience. Built on trust, culture, and sustainability, we're more than a service—we're a movement. By prioritizing eco-friendly practices, local collaborations, and transparent operations, GrassApp redefines how cannabis connects people and communities.",
+        icon: '🌿'
+    },
+    medicalPatient: {
+        title: "Simplified Access for Medical Patients",
+        content: "GrassApp ensures secure and discreet delivery for Maryland's registered medical cannabis patients. Easily browse licensed dispensaries, compare products, and track your delivery in real-time. Not registered yet? Begin your journey through the Maryland Patient Registration Page, and let GrassApp take care of the rest.",
+        link: "https://onestop.md.gov/public_profiles/adult-patient-registration-601c0fd9f9d7557af267e1e1",
+        icon: '💊'
+    },
+    partnerWithUs: {
+        title: "Empowering Dispensaries, One Delivery at a Time",
+        content: "GrassApp partners with local dispensaries to expand their reach and enhance their customer experience. With real-time inventory integration and seamless logistics, we handle the details while you focus on your customers. Ready to grow your business? Let's create something extraordinary together.",
+        contact: "contact@thegrassapp.com",
+        icon: '🤝'
+    },
+    deliveryDriver: {
+        title: "Drive with GrassApp and Make a Difference",
+        content: "Join GrassApp as a certified caregiver and play a vital role in Baltimore's cannabis delivery revolution. With flexible opportunities and the ability to directly impact patient lives, being a GrassApp driver means professionalism, purpose, and pride. Start your journey today by registering as a caregiver through the Maryland Caregiver Registration Page.",
+        link: "https://onestop.md.gov/public_profiles/caregiver-registration-601c0fd5f9d7557af267cee1",
+        icon: '🚗'
+    }
+};
+
+// Function to create and animate info card
+function showInfoCard(pageName) {
+    // Remove any existing info cards
+    const existingCard = document.querySelector('.info-card');
+    if (existingCard) {
+        existingCard.remove();
+    }
+
+    const pageInfo = pageContent[pageName];
+    if (!pageInfo) return;
+
+    // Create card container
+    const card = document.createElement('div');
+    card.className = 'info-card';
+    card.style.cssText = `
+        position: fixed;
+        right: -400px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 350px;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 25px;
+        color: white;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+        border: 1px solid rgba(0, 255, 0, 0.1);
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+        opacity: 0;
+    `;
+
+    // Create icon
+    const icon = document.createElement('div');
+    icon.className = 'card-icon';
+    icon.textContent = pageInfo.icon;
+    icon.style.cssText = `
+        font-size: 48px;
+        margin-bottom: 15px;
+        animation: floatIcon 3s ease-in-out infinite;
+    `;
+
+    // Create title
+    const title = document.createElement('h2');
+    title.textContent = pageInfo.title;
+    title.style.cssText = `
+        font-size: 24px;
+        margin-bottom: 15px;
+        color: #00ff00;
+        font-weight: bold;
+        text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    `;
+
+    // Create content
+    const content = document.createElement('p');
+    content.textContent = pageInfo.content;
+    content.style.cssText = `
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        color: rgba(255, 255, 255, 0.9);
+    `;
+
+    // Add link or contact if available
+    if (pageInfo.link || pageInfo.contact) {
+        const link = document.createElement('a');
+        link.href = pageInfo.link || `mailto:${pageInfo.contact}`;
+        link.textContent = pageInfo.link ? 'Register Now' : 'Contact Us';
+        link.target = '_blank';
+        link.style.cssText = `
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #00ff00, #00cc00);
+            color: black;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+        `;
+        link.onmouseover = () => {
+            link.style.transform = 'scale(1.05)';
+            link.style.boxShadow = '0 0 20px rgba(0, 255, 0, 0.5)';
+        };
+        link.onmouseout = () => {
+            link.style.transform = 'scale(1)';
+            link.style.boxShadow = '0 0 15px rgba(0, 255, 0, 0.3)';
+        };
+        card.appendChild(link);
+    }
+
+    // Add close button
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '×';
+    closeBtn.style.cssText = `
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    `;
+    closeBtn.onclick = () => {
+        card.style.right = '-400px';
+        card.style.opacity = '0';
+        setTimeout(() => card.remove(), 500);
+    };
+
+    // Assemble card
+    card.appendChild(closeBtn);
+    card.appendChild(icon);
+    card.appendChild(title);
+    card.appendChild(content);
+
+    // Add styles for animations
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .info-card {
+            animation: glowPulse 2s infinite alternate;
+        }
+        @keyframes glowPulse {
+            0% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.2); }
+            100% { box-shadow: 0 0 30px rgba(0, 255, 0, 0.4); }
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Add card to document and animate it in
+    document.body.appendChild(card);
+    setTimeout(() => {
+        card.style.right = '20px';
+        card.style.opacity = '1';
+    }, 100);
+}
+
+// Update showPageImpl to show info card after camera movement
 async function showPageImpl(pageName) {
     console.log('Looking for page:', pageName);
     const page = pages.find(p => p.name === pageName);
@@ -433,7 +606,11 @@ async function showPageImpl(pageName) {
         // Fade out and remove
         setTimeout(() => {
             overlay.style.opacity = '0';
-            setTimeout(() => overlay.remove(), 1500);
+            setTimeout(() => {
+                overlay.remove();
+                // Show info card after camera movement completes
+                showInfoCard(pageName);
+            }, 1500);
         }, 750);
 
     } catch (error) {
