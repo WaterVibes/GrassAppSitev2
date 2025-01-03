@@ -33,15 +33,15 @@ const introMarkerData = {
 // Set initial camera position with correct orientation
 camera.position.set(
     parseFloat(introMarkerData.camera.x),
-    parseFloat(introMarkerData.camera.z), // Use Z as up axis
-    -parseFloat(introMarkerData.camera.y)  // Negate Y for correct orientation
+    parseFloat(introMarkerData.camera.y),
+    parseFloat(introMarkerData.camera.z)
 );
 
 // Set initial camera target
 const initialTarget = new THREE.Vector3(
     parseFloat(introMarkerData.target.x),
-    parseFloat(introMarkerData.target.z), // Use Z as up axis
-    -parseFloat(introMarkerData.target.y)  // Negate Y for correct orientation
+    parseFloat(introMarkerData.target.y),
+    parseFloat(introMarkerData.target.z)
 );
 camera.lookAt(initialTarget);
 
@@ -101,8 +101,8 @@ controls.enablePan = true;
 controls.panSpeed = 0.5;
 controls.minDistance = 100;
 controls.maxDistance = 1500;
-controls.maxPolarAngle = Math.PI / 2.5; // Prevent going below horizon
-controls.minPolarAngle = 0.1; // Allow looking from above
+controls.maxPolarAngle = Math.PI / 2.1; // Prevent going below horizon
+controls.minPolarAngle = Math.PI / 6;   // Prevent going too high
 controls.target.copy(initialTarget);
 
 // Function to update fog based on camera position
@@ -211,11 +211,11 @@ async function createMarker(data, color = 0x00ff00) {
     const markerMaterial = new THREE.MeshBasicMaterial({ color });
     const marker = new THREE.Mesh(markerGeometry, markerMaterial);
     
-    // Set position from marker data with correct orientation
+    // Set position from marker data
     marker.position.set(
         parseFloat(markerData.subject.x),
-        parseFloat(markerData.subject.z), // Use Z as up axis
-        -parseFloat(markerData.subject.y)  // Negate Y for correct orientation
+        parseFloat(markerData.subject.y),
+        parseFloat(markerData.subject.z)
     );
     scene.add(marker);
 
@@ -234,16 +234,16 @@ async function createMarker(data, color = 0x00ff00) {
     labelDiv.onclick = async () => {
         const cameraData = await loadMarkerData(data.cameraFile);
         if (cameraData) {
-            // Create camera position and target vectors with correct orientation
+            // Create camera position and target vectors
             const targetPos = new THREE.Vector3(
                 parseFloat(cameraData.target.x),
-                parseFloat(cameraData.target.z), // Use Z as up axis
-                -parseFloat(cameraData.target.y)  // Negate Y for correct orientation
+                parseFloat(cameraData.target.y),
+                parseFloat(cameraData.target.z)
             );
             const cameraPos = new THREE.Vector3(
                 parseFloat(cameraData.camera.x),
-                parseFloat(cameraData.camera.z), // Use Z as up axis
-                -parseFloat(cameraData.camera.y)  // Negate Y for correct orientation
+                parseFloat(cameraData.camera.y),
+                parseFloat(cameraData.camera.z)
             );
 
             // Animate camera movement
@@ -345,39 +345,24 @@ try {
             console.log('Model loaded successfully');
             const model = gltf.scene;
             
-            // Set correct model orientation
+            // Set model orientation
             model.scale.set(1, 1, 1);
-            model.rotation.x = Math.PI / 2; // Rotate model to align with world coordinates
+            model.rotation.x = -Math.PI / 2; // Rotate model to match marker coordinates
             
-            // Improve material settings
-            model.traverse((node) => {
-                if (node.isMesh) {
-                    node.castShadow = true;
-                    node.receiveShadow = true;
-                    if (node.material) {
-                        node.material.needsUpdate = true;
-                        node.material.side = THREE.DoubleSide;
-                        node.material.transparent = false;
-                        node.material.opacity = 1;
-                    }
-                }
-            });
-            
-            scene.add(model);
-
             // Center the model
             const box = new THREE.Box3().setFromObject(model);
             const center = box.getCenter(new THREE.Vector3());
-            const size = box.getSize(new THREE.Vector3());
-            
             model.position.sub(center);
             
-            const maxDim = Math.max(size.x, size.y, size.z);
+            // Ensure model is at ground level
+            model.position.y = 0;
             
+            scene.add(model);
+
             // Update controls based on model size
             controls.target.set(0, 0, 0);
-            controls.maxDistance = maxDim * 0.8;
-            controls.minDistance = maxDim * 0.2;
+            controls.maxDistance = 1500;
+            controls.minDistance = 100;
             
             createAllMarkers();
             
