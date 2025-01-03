@@ -253,7 +253,7 @@ async function createMarker(data, color = 0x00ff00) {
     if (!markerData) return;
 
     // Create marker geometry with smaller size
-    const markerGeometry = new THREE.SphereGeometry(5, 16, 16);  // Reduced size from 10 to 5
+    const markerGeometry = new THREE.SphereGeometry(5, 16, 16);
     const markerMaterial = new THREE.MeshBasicMaterial({ color });
     const marker = new THREE.Mesh(markerGeometry, markerMaterial);
     
@@ -264,51 +264,6 @@ async function createMarker(data, color = 0x00ff00) {
         parseFloat(markerData.subject.z)
     );
     scene.add(marker);
-
-    // Create label with adjusted position
-    const labelDiv = document.createElement('div');
-    labelDiv.className = 'district-label';
-    labelDiv.textContent = data.name;
-    labelDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-    labelDiv.style.color = 'white';
-    labelDiv.style.padding = '5px 10px';
-    labelDiv.style.borderRadius = '5px';
-    labelDiv.style.fontSize = '14px';
-    labelDiv.style.pointerEvents = 'auto';
-    labelDiv.style.cursor = 'pointer';
-    
-    const label = new CSS2DObject(labelDiv);
-    label.position.copy(marker.position);
-    label.position.y += 10;  // Reduced offset from 20 to 10
-    scene.add(label);
-    
-    // Make label clickable with adjusted camera movement
-    labelDiv.onclick = async () => {
-        const cameraData = await loadMarkerData(data.cameraFile);
-        if (cameraData) {
-            const targetPos = new THREE.Vector3(
-                parseFloat(cameraData.target.x),
-                parseFloat(cameraData.target.y),
-                parseFloat(cameraData.target.z)
-            );
-            const cameraPos = new THREE.Vector3(
-                parseFloat(cameraData.camera.x),
-                parseFloat(cameraData.camera.y),
-                parseFloat(cameraData.camera.z)
-            );
-
-            // Smoother camera movement
-            new TWEEN.Tween(camera.position)
-                .to(cameraPos, 1500)  // Increased duration to 1500ms
-                .easing(TWEEN.Easing.Cubic.InOut)
-                .start();
-
-            new TWEEN.Tween(controls.target)
-                .to(targetPos, 1500)  // Increased duration to 1500ms
-                .easing(TWEEN.Easing.Cubic.InOut)
-                .start();
-        }
-    };
 }
 
 // Function to create all markers
@@ -324,7 +279,7 @@ async function createAllMarkers() {
     }
 }
 
-// Function to select district and move camera
+// Function to handle district selection with camera movement
 async function selectDistrict(districtName) {
     const district = districts.find(d => d.name === districtName);
     if (!district) {
@@ -351,15 +306,15 @@ async function selectDistrict(districtName) {
             parseFloat(cameraData.camera.z)
         );
 
-        // Animate camera movement
+        // Smoother camera movement
         new TWEEN.Tween(camera.position)
-            .to(cameraPos, 1000)
+            .to(cameraPos, 1500)
             .easing(TWEEN.Easing.Cubic.InOut)
             .start();
 
         // Animate controls target
         new TWEEN.Tween(controls.target)
-            .to(targetPos, 1000)
+            .to(targetPos, 1500)
             .easing(TWEEN.Easing.Cubic.InOut)
             .start();
 
@@ -370,6 +325,30 @@ async function selectDistrict(districtName) {
 
 // Make selectDistrict available globally
 window.selectDistrict = selectDistrict;
+
+// Add click handlers to navigation buttons after DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    // Handle district buttons
+    const districtButtons = document.querySelectorAll('.districts-container button');
+    districtButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const districtName = button.textContent.trim();
+            selectDistrict(districtName);
+        });
+    });
+
+    // Handle page buttons
+    const pageButtons = document.querySelectorAll('.pages-container button');
+    pageButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const pageName = button.textContent.trim();
+            const page = pages.find(p => p.name === pageName);
+            if (page) {
+                selectDistrict(pageName); // Reuse the same function for pages
+            }
+        });
+    });
+});
 
 try {
     // Initialize loaders
