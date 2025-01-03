@@ -5,9 +5,63 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import * as TWEEN from '@tweenjs/tween.js';
 
+// Global variables
+let scene, camera, renderer, labelRenderer, controls;
+
 // Get loading elements
 const loadingScreen = document.querySelector('.loading-screen');
 const loadingProgress = document.querySelector('.loading-progress');
+
+// Initialize scene and camera
+scene = new THREE.Scene();
+camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
+camera.position.set(0, 2000, 3000);
+camera.lookAt(0, 0, 0);
+
+// Initialize renderer
+renderer = new THREE.WebGLRenderer({ 
+    antialias: true,
+    alpha: true,
+    powerPreference: "high-performance",
+    failIfMajorPerformanceCaveat: true,
+    canvas: document.createElement('canvas')
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x000000, 1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+
+// Initialize CSS2D renderer for labels
+labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0';
+labelRenderer.domElement.style.pointerEvents = 'auto';
+document.body.appendChild(labelRenderer.domElement);
+
+// Initialize controls
+controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.maxDistance = 5000;
+controls.minDistance = 100;
+controls.maxPolarAngle = Math.PI / 2;
+controls.target.set(0, 0, 0);
+
+// Add lights
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+directionalLight.position.set(1000, 1000, 1000);
+directionalLight.castShadow = true;
+directionalLight.shadow.mapSize.width = 2048;
+directionalLight.shadow.mapSize.height = 2048;
+directionalLight.shadow.camera.near = 0.1;
+directionalLight.shadow.camera.far = 5000;
+scene.add(directionalLight);
 
 // District markers with their camera positions
 const districts = [
@@ -153,50 +207,6 @@ async function createAllMarkers() {
 }
 
 try {
-    // Scene Setup
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
-    // Set initial camera position higher and further back for better overview
-    camera.position.set(0, 2000, 3000);
-    camera.lookAt(0, 0, 0);
-
-    // Initialize renderer with antialias and alpha
-    const renderer = new THREE.WebGLRenderer({ 
-        antialias: true,
-        alpha: true,
-        powerPreference: "high-performance",
-        failIfMajorPerformanceCaveat: true,
-        canvas: document.createElement('canvas')
-    });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 1); // Set background color to black
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    document.body.appendChild(renderer.domElement);
-
-    // Add ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-
-    // Add directional light with shadows
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(1000, 1000, 1000);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 2048;
-    directionalLight.shadow.mapSize.height = 2048;
-    directionalLight.shadow.camera.near = 0.1;
-    directionalLight.shadow.camera.far = 5000;
-    scene.add(directionalLight);
-
-    // Initialize CSS2D renderer for labels
-    const labelRenderer = new CSS2DRenderer();
-    labelRenderer.setSize(window.innerWidth, window.innerHeight);
-    labelRenderer.domElement.style.position = 'absolute';
-    labelRenderer.domElement.style.top = '0';
-    labelRenderer.domElement.style.pointerEvents = 'auto';
-    document.body.appendChild(labelRenderer.domElement);
-
     // Initialize loaders
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath('https://unpkg.com/three@0.158.0/examples/jsm/libs/draco/');
@@ -269,15 +279,6 @@ try {
         }
     );
 
-    // Controls
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.maxDistance = 5000;
-    controls.minDistance = 100;  // Add minimum distance
-    controls.maxPolarAngle = Math.PI / 2;  // Prevent camera from going below the ground
-    controls.target.set(0, 0, 0);  // Set initial target to center
-
     // Animation Loop
     function animate() {
         requestAnimationFrame(animate);
@@ -304,19 +305,7 @@ try {
 
 } catch (error) {
     console.error('Initialization error:', error);
-    const errorFallback = document.getElementById('error-fallback');
-    if (errorFallback) {
-        const errorMessage = errorFallback.querySelector('.error-message');
-        const errorDetails = errorFallback.querySelector('.error-details');
-        
-        if (errorMessage) errorMessage.textContent = 'Failed to initialize the application';
-        if (errorDetails) errorDetails.textContent = error.message;
-        
-        errorFallback.classList.remove('hidden');
-    }
-    if (loadingScreen) {
-        loadingScreen.classList.add('hidden');
-    }
+    showError('Failed to initialize the application', error.message);
 }
 
 // Error handling function
