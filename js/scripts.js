@@ -253,7 +253,11 @@ async function createMarker(data, color = 0x00ff00) {
 
     // Create marker geometry with smaller size
     const markerGeometry = new THREE.SphereGeometry(5, 16, 16);
-    const markerMaterial = new THREE.MeshBasicMaterial({ color });
+    const markerMaterial = new THREE.MeshBasicMaterial({ 
+        color,
+        transparent: true,
+        opacity: 0.0  // Make markers invisible
+    });
     const marker = new THREE.Mesh(markerGeometry, markerMaterial);
     
     // Set position from marker data
@@ -311,25 +315,83 @@ async function selectDistrict(districtName) {
             parseFloat(cameraData.camera.z)
         );
 
-        // Smoother camera movement
-        new TWEEN.Tween(camera.position)
-            .to(cameraPos, 1500)
-            .easing(TWEEN.Easing.Cubic.InOut)
-            .start();
-
-        // Animate controls target
-        new TWEEN.Tween(controls.target)
-            .to(targetPos, 1500)
-            .easing(TWEEN.Easing.Cubic.InOut)
-            .start();
+        // Instant camera movement for districts
+        camera.position.copy(cameraPos);
+        controls.target.copy(targetPos);
+        controls.update();
 
     } catch (error) {
         console.error('Error moving camera to district:', districtName, error);
     }
 }
 
-// Make selectDistrict available globally
-window.selectDistrict = selectDistrict;
+// Function to show a page with smooth transition
+async function showPage(pageName) {
+    console.log('Looking for page:', pageName);
+    const page = pages.find(p => p.name === pageName);
+    if (!page) {
+        console.error('Page not found:', pageName);
+        return;
+    }
+
+    try {
+        const cameraData = await loadMarkerData(page.cameraFile);
+        if (!cameraData) {
+            console.error('Camera data not found for page:', pageName);
+            return;
+        }
+
+        // Create camera position and target vectors
+        const targetPos = new THREE.Vector3(
+            parseFloat(cameraData.target.x),
+            parseFloat(cameraData.target.y),
+            parseFloat(cameraData.target.z)
+        );
+        const cameraPos = new THREE.Vector3(
+            parseFloat(cameraData.camera.x),
+            parseFloat(cameraData.camera.y),
+            parseFloat(cameraData.camera.z)
+        );
+
+        // Smooth transition for pages with transparency
+        new TWEEN.Tween(camera.position)
+            .to(cameraPos, 1500)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .start();
+
+        new TWEEN.Tween(controls.target)
+            .to(targetPos, 1500)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .start();
+
+        // Add a slight fade effect during transition
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.transition = 'opacity 1.5s';
+        overlay.style.opacity = '0';
+        document.body.appendChild(overlay);
+
+        // Fade in
+        setTimeout(() => { overlay.style.opacity = '1'; }, 0);
+        // Fade out and remove
+        setTimeout(() => {
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 1500);
+        }, 750);
+
+    } catch (error) {
+        console.error('Error moving camera to page:', pageName, error);
+    }
+}
+
+// Make showPage available globally
+window.showPage = showPage;
 
 // Add click handlers to navigation buttons after DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
@@ -392,18 +454,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     pageName = buttonText;
             }
             
-            const page = pages.find(p => p.name === pageName);
-            if (page) {
-                selectDistrict(pageName);
-            }
+            showPage(pageName);  // Use showPage for pages instead of selectDistrict
         });
     });
 });
-
-// Function to show a page (to replace the missing showPage function)
-window.showPage = function(pageName) {
-    selectDistrict(pageName);
-};
 
 try {
     // Initialize loaders
