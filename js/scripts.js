@@ -170,15 +170,23 @@ try {
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 1); // Set background color to black
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
 
     // Add ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
-    // Add directional light
+    // Add directional light with shadows
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(0, 1, 0);
+    directionalLight.position.set(1000, 1000, 1000);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 2048;
+    directionalLight.shadow.mapSize.height = 2048;
+    directionalLight.shadow.camera.near = 0.1;
+    directionalLight.shadow.camera.far = 5000;
     scene.add(directionalLight);
 
     // Initialize CSS2D renderer for labels
@@ -199,7 +207,7 @@ try {
     gltfLoader.setDRACOLoader(dracoLoader);
 
     // Load the model
-    const modelPath = new URL('/GrassAppSitev2/models/baltimore_city_optimized_v2.glb', window.location.origin).href;
+    const modelPath = 'models/baltimore_city_optimized_v2.glb';
     console.log('Starting to load model from:', modelPath);
     gltfLoader.load(
         modelPath,
@@ -208,6 +216,13 @@ try {
             
             // Add the model to the scene
             const model = gltf.scene;
+            
+            // Scale the model up
+            model.scale.set(1, 1, 1);
+            
+            // Rotate the model if needed
+            model.rotation.x = -Math.PI / 2; // Rotate 90 degrees around X axis
+            
             scene.add(model);
 
             // Center the model
@@ -221,6 +236,13 @@ try {
                 max: box.max,
                 center: center
             });
+
+            // Set camera position based on model bounds
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            camera.position.set(maxDim, maxDim, maxDim);
+            camera.lookAt(center);
+            controls.target.copy(center);
 
             createAllMarkers(); // Add all markers after model is loaded
             
