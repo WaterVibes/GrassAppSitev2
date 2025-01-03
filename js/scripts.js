@@ -12,29 +12,29 @@ const loadingProgress = document.querySelector('.loading-progress');
 // District markers with their camera positions
 const districts = [
     {
-        name: 'Central Baltimore',
-        markerFile: 'marker_mount_vernon_subject__subject_marker_1735197588128.json',
-        cameraFile: 'marker_mount_vernon_camera_camera_marker_1735197513333.json'
-    },
-    {
-        name: 'East Baltimore',
-        markerFile: 'marker_fells_point_subject__subject_marker_1735197073807.json',
-        cameraFile: 'marker_fells_point_camera_camera_marker_1735197031057.json'
-    },
-    {
-        name: 'West Baltimore',
+        name: 'Baltimore Inner Harbor',
         markerFile: 'marker_baltimore_inner_harbor_subject_subject_marker_1735195982517.json',
         cameraFile: 'marker_baltimore_inner_harbor__1735194251759.json'
     },
     {
-        name: 'South Baltimore',
+        name: 'Canton',
+        markerFile: 'marker_canton_subject_subject_marker_1735196858094.json',
+        cameraFile: 'marker_canton_camera_camera_marker_1735196801332.json'
+    },
+    {
+        name: 'Fells Point',
+        markerFile: 'marker_fells_point_subject__subject_marker_1735197073807.json',
+        cameraFile: 'marker_fells_point_camera_camera_marker_1735197031057.json'
+    },
+    {
+        name: 'Federal Hill',
         markerFile: 'marker_federal_hill_subject__subject_marker_1735196627275.json',
         cameraFile: 'marker_federal_hill_marker_camera_marker_1735196516687.json'
     },
     {
-        name: 'North Baltimore',
-        markerFile: 'marker_canton_subject_subject_marker_1735196858094.json',
-        cameraFile: 'marker_canton_camera_camera_marker_1735196801332.json'
+        name: 'Mount Vernon',
+        markerFile: 'marker_mount_vernon_subject__subject_marker_1735197588128.json',
+        cameraFile: 'marker_mount_vernon_camera_camera_marker_1735197513333.json'
     }
 ];
 
