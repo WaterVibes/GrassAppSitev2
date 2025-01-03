@@ -5,7 +5,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import * as TWEEN from '@tweenjs/tween.js';
 
 // Get loading elements
-const loadingDiv = document.getElementById('loading');
+const loadingScreen = document.querySelector('.loading-screen');
 const loadingProgress = document.querySelector('.loading-progress');
 
 try {
@@ -45,8 +45,8 @@ try {
             scene.add(gltf.scene);
             
             // Hide loading screen
-            if (loadingDiv) {
-                loadingDiv.style.display = 'none';
+            if (loadingScreen) {
+                loadingScreen.style.display = 'none';
             }
         },
         (progress) => {
@@ -106,8 +106,8 @@ try {
         
         errorFallback.classList.remove('hidden');
     }
-    if (loadingDiv) {
-        loadingDiv.classList.add('hidden');
+    if (loadingScreen) {
+        loadingScreen.classList.add('hidden');
     }
 }
 
@@ -124,7 +124,7 @@ function showError(message, details) {
         
         errorFallback.classList.remove('hidden');
     }
-    if (loadingDiv) {
-        loadingDiv.classList.add('hidden');
+    if (loadingScreen) {
+        loadingScreen.classList.add('hidden');
     }
 } 
