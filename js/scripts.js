@@ -86,34 +86,52 @@ labelRenderer.domElement.style.pointerEvents = 'auto';
 document.body.appendChild(labelRenderer.domElement);
 
 // Add lights for better visibility
-const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
 scene.add(ambientLight);
 
 // Add multiple directional lights for better coverage
-const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+const directionalLight1 = new THREE.DirectionalLight(0xffffff, 1.2);
 directionalLight1.position.set(1000, 1000, 1000);
 scene.add(directionalLight1);
 
-const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.8);
+const directionalLight2 = new THREE.DirectionalLight(0xffffff, 1.2);
 directionalLight2.position.set(-1000, 1000, -1000);
 scene.add(directionalLight2);
 
-const directionalLight3 = new THREE.DirectionalLight(0xffffff, 0.8);
+const directionalLight3 = new THREE.DirectionalLight(0xffffff, 1.2);
 directionalLight3.position.set(0, 1000, 0);
 scene.add(directionalLight3);
 
-// Remove old point lights and add new ones at strategic positions
-const pointLight1 = new THREE.PointLight(0xffffff, 0.8, 2000);
-pointLight1.position.set(500, 800, 500);
+// Add more directional lights for comprehensive coverage
+const directionalLight4 = new THREE.DirectionalLight(0xffffff, 1.0);
+directionalLight4.position.set(1000, 1000, -1000);
+scene.add(directionalLight4);
+
+const directionalLight5 = new THREE.DirectionalLight(0xffffff, 1.0);
+directionalLight5.position.set(-1000, 1000, 1000);
+scene.add(directionalLight5);
+
+// Remove old point lights and add new ones at strategic positions with increased intensity
+const pointLight1 = new THREE.PointLight(0xffffff, 1.2, 2500);
+pointLight1.position.set(500, 1000, 500);
 scene.add(pointLight1);
 
-const pointLight2 = new THREE.PointLight(0xffffff, 0.8, 2000);
-pointLight2.position.set(-500, 800, -500);
+const pointLight2 = new THREE.PointLight(0xffffff, 1.2, 2500);
+pointLight2.position.set(-500, 1000, -500);
 scene.add(pointLight2);
 
-const pointLight3 = new THREE.PointLight(0xffffff, 0.8, 2000);
-pointLight3.position.set(0, 800, 0);
+const pointLight3 = new THREE.PointLight(0xffffff, 1.2, 2500);
+pointLight3.position.set(0, 1000, 0);
 scene.add(pointLight3);
+
+// Add point lights at corners for better edge lighting
+const pointLight4 = new THREE.PointLight(0xffffff, 1.0, 2500);
+pointLight4.position.set(500, 1000, -500);
+scene.add(pointLight4);
+
+const pointLight5 = new THREE.PointLight(0xffffff, 1.0, 2500);
+pointLight5.position.set(-500, 1000, 500);
+scene.add(pointLight5);
 
 // Initialize controls with adjusted constraints
 controls = new OrbitControls(camera, renderer.domElement);
