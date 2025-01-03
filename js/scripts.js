@@ -495,7 +495,7 @@ const pageContent = {
     }
 };
 
-// Update showInfoCard function with wider cards and auto-dismiss
+// Update showInfoCard function with improved swipe handling
 function showInfoCard(pageName) {
     // Remove any existing info cards first
     removeExistingInfoCard();
@@ -689,28 +689,51 @@ function showInfoCard(pageName) {
 
     card.appendChild(dotsContainer);
 
-    // Add swipe navigation for mobile
+    // Improved swipe navigation for mobile
     let touchStartX = 0;
+    let touchStartY = 0;
+    let isSwiping = false;
+
     card.addEventListener('touchstart', (e) => {
         touchStartX = e.touches[0].clientX;
-    });
+        touchStartY = e.touches[0].clientY;
+        isSwiping = false;
+    }, { passive: true });
+
+    card.addEventListener('touchmove', (e) => {
+        if (!isSwiping) {
+            const touchMoveX = e.touches[0].clientX;
+            const touchMoveY = e.touches[0].clientY;
+            const deltaX = Math.abs(touchMoveX - touchStartX);
+            const deltaY = Math.abs(touchMoveY - touchStartY);
+
+            // If horizontal swipe is more significant than vertical scroll
+            if (deltaX > deltaY && deltaX > 30) {
+                isSwiping = true;
+                e.preventDefault();
+            }
+        }
+    }, { passive: false });
 
     card.addEventListener('touchend', (e) => {
+        if (!isSwiping) return;
+
         const touchEndX = e.changedTouches[0].clientX;
         const diff = touchStartX - touchEndX;
+        const swipeThreshold = 50;  // Minimum swipe distance
 
-        if (Math.abs(diff) > 50) {  // Minimum swipe distance
+        if (Math.abs(diff) > swipeThreshold) {
             if (diff > 0 && currentCardIndex < pageInfo.cards.length - 1) {
-                // Swipe left
+                // Swipe left - next card
                 currentCardIndex++;
                 showInfoCard(pageName);
             } else if (diff < 0 && currentCardIndex > 0) {
-                // Swipe right
+                // Swipe right - previous card
                 currentCardIndex--;
                 showInfoCard(pageName);
             }
         }
-    });
+    }, { passive: true });
 
     // Reset card index when changing pages
     if (card.dataset.pageName !== pageName) {
@@ -800,7 +823,7 @@ async function showPageImpl(pageName) {
     }
 }
 
-// Add navigation panel collapse functionality
+// Update collapseNavPanel function for better mobile support
 function collapseNavPanel() {
     const navPanel = document.querySelector('.nav-container');
     if (!navPanel) return;
@@ -818,17 +841,18 @@ function collapseNavPanel() {
             background: rgba(0, 255, 0, 0.2);
             border: 1px solid rgba(0, 255, 0, 0.3);
             color: #00ff00;
-            padding: 10px;
+            padding: ${isMobileDevice() ? '15px' : '10px'};  // Larger touch target on mobile
             cursor: pointer;
             border-radius: 0 5px 5px 0;
             transition: all 0.3s ease;
             z-index: 999;
+            opacity: ${isMobileDevice() ? '0.8' : '1'};  // More visible on mobile
         `;
         collapseBtn.onclick = toggleNavPanel;
         navPanel.appendChild(collapseBtn);
     }
 
-    // Add CSS for panel animation
+    // Add CSS for panel animation with mobile-specific styles
     const style = document.createElement('style');
     style.textContent = `
         .nav-container {
@@ -838,6 +862,7 @@ function collapseNavPanel() {
             top: 0;
             height: 100vh;
             z-index: 1000;
+            background: rgba(0, 0, 0, 0.8);  // Added background for mobile
         }
         .nav-container.collapsed {
             transform: translateX(-100%);
@@ -846,17 +871,45 @@ function collapseNavPanel() {
             right: -30px;
             transform: translateY(-50%) rotate(180deg);
         }
+        @media (max-width: 768px) {
+            .nav-container {
+                width: 80%;  // Smaller width on mobile
+                transform: translateX(-100%);  // Start collapsed on mobile
+            }
+            .nav-container.expanded {
+                transform: translateX(0);
+            }
+            .nav-collapse-btn {
+                width: 40px;  // Larger touch target
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
     `;
     document.head.appendChild(style);
+
+    // Set initial state for mobile
+    if (isMobileDevice()) {
+        navPanel.classList.add('collapsed');
+    }
 }
 
+// Update toggleNavPanel function for mobile
 function toggleNavPanel() {
     const navPanel = document.querySelector('.nav-container');
     if (!navPanel) return;
     
-    navPanel.classList.toggle('collapsed');
-    const isCollapsed = navPanel.classList.contains('collapsed');
-    localStorage.setItem('navPanelCollapsed', isCollapsed);
+    if (isMobileDevice()) {
+        navPanel.classList.toggle('expanded');
+        const isExpanded = navPanel.classList.contains('expanded');
+        localStorage.setItem('navPanelExpanded', isExpanded);
+    } else {
+        navPanel.classList.toggle('collapsed');
+        const isCollapsed = navPanel.classList.contains('collapsed');
+        localStorage.setItem('navPanelCollapsed', isCollapsed);
+    }
 }
 
 // Update button click handlers with proper nav panel collapse
