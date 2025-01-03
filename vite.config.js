@@ -20,11 +20,13 @@ export default defineConfig({
         }
       }
     },
-    assetsInlineLimit: 0
+    assetsInlineLimit: 0,
+    copyPublicDir: true
   },
   publicDir: 'public',
-  assetsInclude: ['**/*.glb', '**/*.wasm', '**/*.js'],
+  assetsInclude: ['**/*.glb', '**/*.wasm', '**/*.js', '**/*.png'],
   optimizeDeps: {
-    exclude: ['draco3d']
+    exclude: ['draco3d'],
+    include: ['three']
   }
 }); 
