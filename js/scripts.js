@@ -99,11 +99,11 @@ controls.dampingFactor = 0.05;
 controls.screenSpacePanning = false;
 controls.enablePan = true;
 controls.panSpeed = 0.5;
-controls.minDistance = 100;  // Reduced minimum distance
-controls.maxDistance = 2000; // Reduced maximum distance
-controls.maxPolarAngle = Math.PI / 1.5; // Allow more downward angle
-controls.minPolarAngle = 0;   // Allow full upward rotation
-controls.target.copy(initialTarget); // Set control target to match camera target
+controls.minDistance = 100;
+controls.maxDistance = 1500; // Reduced from 2000
+controls.maxPolarAngle = Math.PI / 2.1; // Slightly above horizontal
+controls.minPolarAngle = Math.PI / 6;   // Prevent going too high up
+controls.target.copy(initialTarget);
 
 // Function to update fog based on camera position
 function updateFog() {
@@ -117,9 +117,9 @@ function updateFog() {
 
 // Function to constrain camera position
 function constrainCamera() {
-    const maxRadius = 2000;  // Reduced maximum distance from center
-    const minHeight = 50;    // Reduced minimum height
-    const maxHeight = 1000;  // Reduced maximum height
+    const maxRadius = 1500;  // Reduced from 2000
+    const minHeight = 30;    // Reduced from 50
+    const maxHeight = 500;   // Reduced from 1000
 
     // Get current camera position vector
     const pos = camera.position.clone();
@@ -390,7 +390,7 @@ try {
             
             // Update controls based on model size
             controls.target.set(0, 0, 0);
-            controls.maxDistance = maxDim * 1.5;
+            controls.maxDistance = maxDim * 0.8; // Reduced from 1.5
             controls.minDistance = maxDim * 0.1;
             
             // Update fog based on model size (very far)
