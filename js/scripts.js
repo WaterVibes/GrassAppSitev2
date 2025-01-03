@@ -287,6 +287,53 @@ async function createAllMarkers() {
     }
 }
 
+// Function to select district and move camera
+async function selectDistrict(districtName) {
+    const district = districts.find(d => d.name === districtName);
+    if (!district) {
+        console.error('District not found:', districtName);
+        return;
+    }
+
+    try {
+        const cameraData = await loadMarkerData(district.cameraFile);
+        if (!cameraData) {
+            console.error('Camera data not found for district:', districtName);
+            return;
+        }
+
+        // Create camera position and target vectors
+        const targetPos = new THREE.Vector3(
+            parseFloat(cameraData.target.x),
+            parseFloat(cameraData.target.y),
+            parseFloat(cameraData.target.z)
+        );
+        const cameraPos = new THREE.Vector3(
+            parseFloat(cameraData.camera.x),
+            parseFloat(cameraData.camera.y),
+            parseFloat(cameraData.camera.z)
+        );
+
+        // Animate camera movement
+        new TWEEN.Tween(camera.position)
+            .to(cameraPos, 1000)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .start();
+
+        // Animate controls target
+        new TWEEN.Tween(controls.target)
+            .to(targetPos, 1000)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .start();
+
+    } catch (error) {
+        console.error('Error moving camera to district:', districtName, error);
+    }
+}
+
+// Make selectDistrict available globally
+window.selectDistrict = selectDistrict;
+
 try {
     // Initialize loaders
     const dracoLoader = new DRACOLoader();
