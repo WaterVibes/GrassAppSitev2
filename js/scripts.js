@@ -47,8 +47,8 @@ camera.lookAt(initialTarget);
 
 // Add fog to the scene
 const fogColor = 0x000000;
-const fogNear = 3000;
-const fogFar = 6000;
+const fogNear = 4000;  // Increased from 3000
+const fogFar = 8000;   // Increased from 6000
 scene.fog = new THREE.Fog(fogColor, fogNear, fogFar);
 
 // Initialize renderer
@@ -113,9 +113,9 @@ function updateFog() {
     const distanceToCenter = camera.position.length();
     const maxDistance = controls.maxDistance;
     
-    // Adjust fog density based on camera distance
-    scene.fog.near = Math.max(fogNear * (distanceToCenter / maxDistance), 500);
-    scene.fog.far = Math.min(fogFar * (distanceToCenter / maxDistance), maxDistance);
+    // Adjust fog density based on camera distance with more gradual falloff
+    scene.fog.near = Math.max(fogNear * (distanceToCenter / maxDistance), 2000);  // Increased minimum from 500
+    scene.fog.far = Math.min(fogFar * (distanceToCenter / maxDistance), maxDistance * 2);  // Increased multiplier
 }
 
 // Function to constrain camera position
@@ -393,8 +393,8 @@ try {
             controls.minDistance = maxDim * 0.2;
             
             // Update fog based on model size
-            scene.fog.near = maxDim * 0.7;
-            scene.fog.far = maxDim * 1.2;
+            scene.fog.near = maxDim * 1.2;  // Increased from 0.7
+            scene.fog.far = maxDim * 2;     // Increased from 1.2
             
             createAllMarkers();
             
