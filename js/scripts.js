@@ -56,25 +56,36 @@ const initialTarget = new THREE.Vector3(
 );
 camera.lookAt(initialTarget);
 
-// Add very subtle fog to the scene (only for edges)
+// Update fog settings for better performance
 const fogColor = 0x000000;
-const fogNear = 15000;  // Define fog variables in global scope
-const fogFar = 20000;   // Define fog variables in global scope
+const fogNear = 1200;  // Start fog much further out
+const fogFar = 1500;   // End fog at max distance
 scene.fog = new THREE.Fog(fogColor, fogNear, fogFar);
+
+// Optimize fog update function
+function updateFog() {
+    const distanceToCenter = camera.position.length();
+    if (distanceToCenter > 1000) {  // Only apply fog when near edges
+        scene.fog.near = 1200;
+        scene.fog.far = 1500;
+    } else {
+        scene.fog.near = 1500;  // Effectively disable fog when not near edges
+        scene.fog.far = 2000;
+    }
+}
 
 // Initialize renderer
 renderer = new THREE.WebGLRenderer({ 
-    antialias: true,
+    antialias: window.devicePixelRatio === 1,  // Only use antialiasing on non-mobile
     alpha: true,
     powerPreference: "high-performance",
     failIfMajorPerformanceCaveat: true,
     canvas: document.createElement('canvas')
 });
-renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x000000, 1);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.enabled = false;  // Disable shadows for better performance
 document.body.appendChild(renderer.domElement);
 
 // Initialize CSS2D renderer for labels
@@ -138,49 +149,57 @@ function isMobileDevice() {
     return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
-// Initialize controls with adjusted constraints
-controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.05;
-controls.screenSpacePanning = false;
-controls.enablePan = true;
-controls.panSpeed = isMobileDevice() ? 0.3 : 0.5;  // Slower pan on mobile
-controls.minDistance = isMobileDevice() ? 50 : 100;  // Allow closer zoom on mobile
-controls.maxDistance = isMobileDevice() ? 1000 : 1500;  // Limit max distance on mobile
-controls.maxPolarAngle = Math.PI / 2.1;
-controls.minPolarAngle = Math.PI / 6;
-controls.target.copy(initialTarget);
-
-// Function to update fog based on camera position
-function updateFog() {
-    const distanceToCenter = camera.position.length();
-    const maxDistance = controls.maxDistance;
-    
-    // Much more gradual fog falloff
-    scene.fog.near = Math.max(scene.fog.near * (distanceToCenter / maxDistance), 5000);
-    scene.fog.far = Math.min(scene.fog.far * (distanceToCenter / maxDistance), maxDistance * 4);
-}
-
 // Function to constrain camera position
 function constrainCamera() {
-    const maxRadius = 1500;
-    const minHeight = 100;   // Increased minimum height
-    const maxHeight = 800;   // Adjusted maximum height
+    const maxRadius = 1200;  // Reduced from 1500 to keep within fog boundaries
+    const minHeight = 200;   // Increased minimum height to prevent clipping
+    const maxHeight = 1000;  // Increased maximum height for better overview
 
     const pos = camera.position.clone();
     const horizontalDist = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
     
+    // Constrain horizontal movement
     if (horizontalDist > maxRadius) {
         const angle = Math.atan2(pos.z, pos.x);
         pos.x = maxRadius * Math.cos(angle);
         pos.z = maxRadius * Math.sin(angle);
     }
     
-    // Always keep camera above ground
-    pos.y = Math.max(minHeight, Math.min(maxHeight, pos.y));
+    // Constrain vertical movement with smooth transition near boundaries
+    if (pos.y < minHeight + 100) {
+        pos.y = minHeight + (pos.y - minHeight) * 0.5;  // Smooth transition near ground
+    } else if (pos.y > maxHeight - 100) {
+        pos.y = maxHeight - (maxHeight - pos.y) * 0.5;  // Smooth transition near ceiling
+    }
+    
+    // Additional constraints for diagonal movement
+    const minAngle = Math.PI / 6;  // 30 degrees
+    const maxAngle = Math.PI / 2.1; // About 85 degrees
+    
+    const currentAngle = Math.atan2(pos.y, horizontalDist);
+    if (currentAngle < minAngle) {
+        const targetY = horizontalDist * Math.tan(minAngle);
+        pos.y = pos.y * 0.8 + targetY * 0.2;  // Smooth transition
+    } else if (currentAngle > maxAngle) {
+        const targetY = horizontalDist * Math.tan(maxAngle);
+        pos.y = pos.y * 0.8 + targetY * 0.2;  // Smooth transition
+    }
     
     camera.position.copy(pos);
 }
+
+// Initialize controls with tighter constraints
+controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.screenSpacePanning = false;
+controls.enablePan = true;
+controls.panSpeed = isMobileDevice() ? 0.3 : 0.5;
+controls.minDistance = isMobileDevice() ? 200 : 300;  // Increased minimum distance
+controls.maxDistance = isMobileDevice() ? 1000 : 1200;  // Reduced maximum distance
+controls.maxPolarAngle = Math.PI / 2.1;
+controls.minPolarAngle = Math.PI / 6;
+controls.target.copy(initialTarget);
 
 // Define districts and pages arrays at the top level
 const districts = [
@@ -410,7 +429,7 @@ const pageContent = {
 
 // Function to create and animate info card
 function showInfoCard(pageName) {
-    // Remove any existing info cards
+    // Remove any existing info cards first
     const existingCard = document.querySelector('.info-card');
     if (existingCard) {
         existingCard.remove();
@@ -425,24 +444,28 @@ function showInfoCard(pageName) {
     
     // Adjust card positioning and size based on device
     const isMobile = isMobileDevice();
+    const cardWidth = isMobile ? '90%' : '350px';  // Reduced from 100% on mobile
+    const cardMargin = isMobile ? '0 5%' : '0';    // Center card on mobile
+
     card.style.cssText = `
         position: fixed;
         ${isMobile ? 'bottom: -100%;' : 'right: -400px;'}
-        ${isMobile ? 'left: 0;' : 'top: 50%;'}
-        ${isMobile ? 'width: 100%;' : 'width: 350px;'}
-        ${isMobile ? 'transform: none;' : 'transform: translateY(-50%);'}
-        background: rgba(0, 0, 0, 0.85);
+        ${isMobile ? `left: ${cardMargin};` : 'top: 50%;'}
+        width: ${cardWidth};
+        ${isMobile ? '' : 'transform: translateY(-50%);'}
+        background: rgba(0, 0, 0, 0.9);  // Increased opacity for better readability
         backdrop-filter: blur(10px);
         border-radius: ${isMobile ? '20px 20px 0 0' : '20px'};
-        padding: ${isMobile ? '20px 15px' : '25px'};
+        padding: ${isMobile ? '20px' : '25px'};
         color: white;
-        box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
-        border: 1px solid rgba(0, 255, 0, 0.1);
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        border: 1px solid rgba(0, 255, 0, 0.2);
         transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         z-index: 1000;
         opacity: 0;
-        max-height: ${isMobile ? '70vh' : 'none'};
-        overflow-y: ${isMobile ? 'auto' : 'visible'};
+        max-height: ${isMobile ? '80vh' : 'none'};  // Increased from 70vh
+        overflow-y: ${iMobile ? 'auto' : 'visible'};
+        -webkit-overflow-scrolling: touch;  // Smooth scrolling on iOS
     `;
 
     // Create icon with adjusted size for mobile
@@ -450,30 +473,34 @@ function showInfoCard(pageName) {
     icon.className = 'card-icon';
     icon.textContent = pageInfo.icon;
     icon.style.cssText = `
-        font-size: ${isMobile ? '36px' : '48px'};
-        margin-bottom: ${isMobile ? '10px' : '15px'};
+        font-size: ${isMobile ? '42px' : '48px'};  // Increased from 36px
+        margin-bottom: ${iMobile ? '15px' : '20px'};  // Increased margins
         animation: floatIcon 3s ease-in-out infinite;
+        text-align: center;
     `;
 
     // Create title with adjusted size for mobile
     const title = document.createElement('h2');
     title.textContent = pageInfo.title;
     title.style.cssText = `
-        font-size: ${isMobile ? '20px' : '24px'};
-        margin-bottom: ${iMobile ? '10px' : '15px'};
+        font-size: ${iMobile ? '22px' : '24px'};  // Increased from 20px
+        margin-bottom: ${iMobile ? '15px' : '20px'};
         color: #00ff00;
         font-weight: bold;
         text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        text-align: center;
     `;
 
     // Create content with adjusted size for mobile
     const content = document.createElement('p');
     content.textContent = pageInfo.content;
     content.style.cssText = `
-        font-size: ${isMobile ? '14px' : '16px'};
-        line-height: 1.6;
-        margin-bottom: ${iMobile ? '15px' : '20px'};
-        color: rgba(255, 255, 255, 0.9);
+        font-size: ${iMobile ? '16px' : '16px'};  // Increased from 14px
+        line-height: 1.8;  // Increased from 1.6
+        margin-bottom: ${iMobile ? '20px' : '25px'};
+        color: rgba(255, 255, 255, 0.95);  // Increased opacity
+        text-align: justify;
+        padding: 0 10px;
     `;
 
     // Add link or contact if available with mobile-optimized styles
@@ -483,16 +510,19 @@ function showInfoCard(pageName) {
         link.textContent = pageInfo.link ? 'Register Now' : 'Contact Us';
         link.target = '_blank';
         link.style.cssText = `
-            display: inline-block;
-            padding: ${isMobile ? '8px 16px' : '10px 20px'};
+            display: block;  // Changed to block for full width on mobile
+            width: ${iMobile ? '80%' : 'auto'};  // Control width on mobile
+            margin: ${iMobile ? '0 auto' : '0'};  // Center on mobile
+            padding: ${iMobile ? '12px 0' : '10px 20px'};  // Adjusted padding
             background: linear-gradient(45deg, #00ff00, #00cc00);
             color: black;
             text-decoration: none;
             border-radius: 25px;
             font-weight: bold;
+            text-align: center;
+            font-size: ${iMobile ? '16px' : '16px'};  // Increased from 14px
             transition: all 0.3s ease;
             box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
-            font-size: ${isMobile ? '14px' : '16px'};
         `;
         link.onmouseover = () => {
             link.style.transform = 'scale(1.05)';
@@ -510,7 +540,7 @@ function showInfoCard(pageName) {
     closeBtn.textContent = isMobile ? 'Close' : '×';
     closeBtn.style.cssText = `
         position: absolute;
-        ${isMobile ? 'bottom: 10px;' : 'top: 15px;'}
+        ${iMobile ? 'bottom: 15px;' : 'top: 15px;'}  // Increased from 10px
         ${iMobile ? 'left: 50%;' : 'right: 15px;'}
         ${iMobile ? 'transform: translateX(-50%);' : ''}
         background: ${iMobile ? 'linear-gradient(45deg, #00ff00, #00cc00)' : 'none'};
@@ -518,10 +548,11 @@ function showInfoCard(pageName) {
         color: ${iMobile ? 'black' : 'white'};
         font-size: ${iMobile ? '16px' : '24px'};
         cursor: pointer;
-        padding: ${iMobile ? '8px 20px' : '0'};
-        ${iMobile ? 'width: 120px;' : 'width: 30px; height: 30px;'}
+        padding: ${iMobile ? '12px 30px' : '0'};  // Increased padding
+        ${iMobile ? 'width: 140px;' : 'width: 30px; height: 30px;'}  // Increased width
         border-radius: ${iMobile ? '25px' : '50%'};
         transition: all 0.3s ease;
+        font-weight: bold;
     `;
     closeBtn.onclick = () => {
         if (isMobile) {
