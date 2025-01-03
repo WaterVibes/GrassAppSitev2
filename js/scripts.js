@@ -148,54 +148,53 @@ function constrainCamera() {
     camera.position.copy(pos);
 }
 
-// District markers with their camera positions
+// Define districts and pages arrays at the top level
 const districts = [
     {
-        name: 'Baltimore Inner Harbor',
+        name: 'innerHarbor',
         markerFile: 'marker_baltimore_inner_harbor_subject_subject_marker_1735195982517.json',
         cameraFile: 'marker_baltimore_inner_harbor__1735194251759.json'
     },
     {
-        name: 'Canton',
+        name: 'canton',
         markerFile: 'marker_canton_subject_subject_marker_1735196858094.json',
         cameraFile: 'marker_canton_camera_camera_marker_1735196801332.json'
     },
     {
-        name: 'Fells Point',
+        name: 'fellsPoint',
         markerFile: 'marker_fells_point_subject__subject_marker_1735197073807.json',
         cameraFile: 'marker_fells_point_camera_camera_marker_1735197031057.json'
     },
     {
-        name: 'Federal Hill',
+        name: 'federalHill',
         markerFile: 'marker_federal_hill_subject__subject_marker_1735196627275.json',
         cameraFile: 'marker_federal_hill_marker_camera_marker_1735196516687.json'
     },
     {
-        name: 'Mount Vernon',
+        name: 'mountVernon',
         markerFile: 'marker_mount_vernon_subject__subject_marker_1735197588128.json',
         cameraFile: 'marker_mount_vernon_camera_camera_marker_1735197513333.json'
     }
 ];
 
-// Page markers with their camera positions
 const pages = [
     {
-        name: 'About Us',
+        name: 'aboutUs',
         markerFile: 'marker_about_us_subject__subject_marker_1735199597502.json',
         cameraFile: 'marker_about_us_camera_camera_marker_1735199541761.json'
     },
     {
-        name: 'Medical Patient',
+        name: 'medicalPatient',
         markerFile: 'marker_medical_patient_subject_marker_1735199228409.json',
         cameraFile: 'marker_medical_patient_camera_camera_marker_1735199161321.json'
     },
     {
-        name: 'Partner With Us',
+        name: 'partnerWithUs',
         markerFile: 'marker_partnership_subject__subject_marker_1735199019215.json',
         cameraFile: 'marker_partnership_camera_marker_1735198971796.json'
     },
     {
-        name: 'Delivery Driver',
+        name: 'deliveryDriver',
         markerFile: 'marker_delivery_driver_subject_subject_marker_1735200573413.json',
         cameraFile: 'marker_deliverydrivers_camera_marker_1735200540288.json'
     }
@@ -339,25 +338,25 @@ document.addEventListener('DOMContentLoaded', () => {
     districtButtons.forEach(button => {
         button.addEventListener('click', () => {
             // Convert button text to match district names in data
-            const buttonText = button.textContent.trim();
+            const buttonText = button.textContent.trim().toLowerCase();
             let districtName;
             
             // Map button text to district names
             switch(buttonText) {
-                case 'Baltimore Inner Harbor':
-                    districtName = 'Baltimore Inner Harbor';
+                case 'baltimore inner harbor':
+                    districtName = 'innerHarbor';
                     break;
-                case 'Canton':
-                    districtName = 'Canton';
+                case 'canton':
+                    districtName = 'canton';
                     break;
-                case 'Fells Point':
-                    districtName = 'Fells Point';
+                case 'fells point':
+                    districtName = 'fellsPoint';
                     break;
-                case 'Federal Hill':
-                    districtName = 'Federal Hill';
+                case 'federal hill':
+                    districtName = 'federalHill';
                     break;
-                case 'Mount Vernon':
-                    districtName = 'Mount Vernon';
+                case 'mount vernon':
+                    districtName = 'mountVernon';
                     break;
                 default:
                     districtName = buttonText;
@@ -372,22 +371,22 @@ document.addEventListener('DOMContentLoaded', () => {
     pageButtons.forEach(button => {
         button.addEventListener('click', () => {
             // Convert button text to match page names in data
-            const buttonText = button.textContent.trim();
+            const buttonText = button.textContent.trim().toLowerCase();
             let pageName;
             
             // Map button text to page names
             switch(buttonText) {
-                case 'About Us':
-                    pageName = 'About Us';
+                case 'about us':
+                    pageName = 'aboutUs';
                     break;
-                case 'Medical Patient':
-                    pageName = 'Medical Patient';
+                case 'medical patient':
+                    pageName = 'medicalPatient';
                     break;
-                case 'Partner With Us':
-                    pageName = 'Partner With Us';
+                case 'partner with us':
+                    pageName = 'partnerWithUs';
                     break;
-                case 'Delivery Driver':
-                    pageName = 'Delivery Driver';
+                case 'delivery driver':
+                    pageName = 'deliveryDriver';
                     break;
                 default:
                     pageName = buttonText;
@@ -400,6 +399,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// Function to show a page (to replace the missing showPage function)
+window.showPage = function(pageName) {
+    selectDistrict(pageName);
+};
 
 try {
     // Initialize loaders
