@@ -194,6 +194,28 @@ async function loadMarkerData(markerFile) {
     try {
         const response = await fetch(`markers/${markerFile}`);
         const data = await response.json();
+        
+        // Swap Y and Z coordinates for camera positions
+        if (data.camera) {
+            const oldY = data.camera.y;
+            data.camera.y = data.camera.z;
+            data.camera.z = oldY;
+        }
+        
+        // Swap Y and Z coordinates for target positions
+        if (data.target) {
+            const oldY = data.target.y;
+            data.target.y = data.target.z;
+            data.target.z = oldY;
+        }
+        
+        // Swap Y and Z coordinates for subject positions
+        if (data.subject) {
+            const oldY = data.subject.y;
+            data.subject.y = data.subject.z;
+            data.subject.z = oldY;
+        }
+        
         return data;
     } catch (error) {
         console.error(`Error loading marker data from ${markerFile}:`, error);
