@@ -281,9 +281,15 @@ async function createAllMarkers() {
 
 // Function to handle district selection with camera movement
 async function selectDistrict(districtName) {
+    console.log('Looking for district:', districtName);
+    console.log('Available districts:', districts.map(d => d.name));
+    
     const district = districts.find(d => d.name === districtName);
     if (!district) {
         console.error('District not found:', districtName);
+        // Try to find a close match
+        const availableNames = districts.map(d => d.name);
+        console.log('Available district names:', availableNames);
         return;
     }
 
@@ -332,7 +338,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const districtButtons = document.querySelectorAll('.districts-container button');
     districtButtons.forEach(button => {
         button.addEventListener('click', () => {
-            const districtName = button.textContent.trim();
+            // Convert button text to match district names in data
+            const buttonText = button.textContent.trim();
+            let districtName;
+            
+            // Map button text to district names
+            switch(buttonText) {
+                case 'Baltimore Inner Harbor':
+                    districtName = 'Baltimore Inner Harbor';
+                    break;
+                case 'Canton':
+                    districtName = 'Canton';
+                    break;
+                case 'Fells Point':
+                    districtName = 'Fells Point';
+                    break;
+                case 'Federal Hill':
+                    districtName = 'Federal Hill';
+                    break;
+                case 'Mount Vernon':
+                    districtName = 'Mount Vernon';
+                    break;
+                default:
+                    districtName = buttonText;
+            }
+            
             selectDistrict(districtName);
         });
     });
@@ -341,10 +371,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageButtons = document.querySelectorAll('.pages-container button');
     pageButtons.forEach(button => {
         button.addEventListener('click', () => {
-            const pageName = button.textContent.trim();
+            // Convert button text to match page names in data
+            const buttonText = button.textContent.trim();
+            let pageName;
+            
+            // Map button text to page names
+            switch(buttonText) {
+                case 'About Us':
+                    pageName = 'About Us';
+                    break;
+                case 'Medical Patient':
+                    pageName = 'Medical Patient';
+                    break;
+                case 'Partner With Us':
+                    pageName = 'Partner With Us';
+                    break;
+                case 'Delivery Driver':
+                    pageName = 'Delivery Driver';
+                    break;
+                default:
+                    pageName = buttonText;
+            }
+            
             const page = pages.find(p => p.name === pageName);
             if (page) {
-                selectDistrict(pageName); // Reuse the same function for pages
+                selectDistrict(pageName);
             }
         });
     });
