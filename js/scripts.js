@@ -20,28 +20,28 @@ camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight,
 const introMarkerData = {
     camera: {
         x: "196.97",
-        y: "156.96",
-        z: "630.37"
+        y: "630.37",
+        z: "156.96"
     },
     target: {
         x: "191.44",
-        y: "154.81",
-        z: "622.32"
+        y: "622.32",
+        z: "154.81"
     }
 };
 
 // Set initial camera position with correct orientation
 camera.position.set(
     parseFloat(introMarkerData.camera.x),
-    -parseFloat(introMarkerData.camera.y), // Negate Y for height
-    parseFloat(introMarkerData.camera.z)  // Keep Z for depth
+    parseFloat(introMarkerData.camera.y),
+    parseFloat(introMarkerData.camera.z)
 );
 
 // Set initial camera target
 const initialTarget = new THREE.Vector3(
     parseFloat(introMarkerData.target.x),
-    -parseFloat(introMarkerData.target.y), // Negate Y for height
-    parseFloat(introMarkerData.target.z)  // Keep Z for depth
+    parseFloat(introMarkerData.target.y),
+    parseFloat(introMarkerData.target.z)
 );
 camera.lookAt(initialTarget);
 
@@ -214,8 +214,8 @@ async function createMarker(data, color = 0x00ff00) {
     // Set position from marker data with correct orientation
     marker.position.set(
         parseFloat(markerData.subject.x),
-        -parseFloat(markerData.subject.y), // Negate Y for height
-        parseFloat(markerData.subject.z)  // Keep Z for depth
+        parseFloat(markerData.subject.z),
+        parseFloat(markerData.subject.y)
     );
     scene.add(marker);
 
@@ -237,13 +237,13 @@ async function createMarker(data, color = 0x00ff00) {
             // Create camera position and target vectors with correct orientation
             const targetPos = new THREE.Vector3(
                 parseFloat(cameraData.target.x),
-                -parseFloat(cameraData.target.y), // Negate Y for height
-                parseFloat(cameraData.target.z)  // Keep Z for depth
+                parseFloat(cameraData.target.y),
+                parseFloat(cameraData.target.z)
             );
             const cameraPos = new THREE.Vector3(
                 parseFloat(cameraData.camera.x),
-                -parseFloat(cameraData.camera.y), // Negate Y for height
-                parseFloat(cameraData.camera.z)  // Keep Z for depth
+                parseFloat(cameraData.camera.y),
+                parseFloat(cameraData.camera.z)
             );
 
             // Animate camera movement
@@ -297,13 +297,13 @@ async function selectDistrict(districtName) {
         // Create camera position and target vectors
         const targetPos = new THREE.Vector3(
             parseFloat(cameraData.target.x),
-            -parseFloat(cameraData.target.y), // Negate Y for height
-            parseFloat(cameraData.target.z)  // Keep Z for depth
+            parseFloat(cameraData.target.y),
+            parseFloat(cameraData.target.z)
         );
         const cameraPos = new THREE.Vector3(
             parseFloat(cameraData.camera.x),
-            -parseFloat(cameraData.camera.y), // Negate Y for height
-            parseFloat(cameraData.camera.z)  // Keep Z for depth
+            parseFloat(cameraData.camera.y),
+            parseFloat(cameraData.camera.z)
         );
 
         // Animate camera movement
@@ -347,7 +347,8 @@ try {
             
             // Set model orientation to match the top-down view
             model.scale.set(1, 1, 1);
-            model.rotation.x = -Math.PI / 2; // Rotate model to match the correct orientation
+            model.rotation.x = 0; // Remove the -Math.PI/2 rotation that was causing the issue
+            model.rotation.y = Math.PI; // Rotate 180 degrees around Y axis to face correct direction
             
             // Center the model
             const box = new THREE.Box3().setFromObject(model);
