@@ -28,8 +28,8 @@ try {
 
     // Initialize loaders
     const dracoLoader = new DRACOLoader();
-    console.log('Setting Draco decoder path:', 'https://watervibes.github.io/GrassAppSitev2/draco-decoder/');
-    dracoLoader.setDecoderPath('https://watervibes.github.io/GrassAppSitev2/draco-decoder/');
+    console.log('Setting Draco decoder path:', 'https://unpkg.com/three@0.158.0/examples/jsm/libs/draco/');
+    dracoLoader.setDecoderPath('https://unpkg.com/three@0.158.0/examples/jsm/libs/draco/');
     dracoLoader.setDecoderConfig({ type: 'js' }); // Explicitly use JS decoder
 
     const gltfLoader = new GLTFLoader();
