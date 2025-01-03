@@ -9,20 +9,57 @@ import * as TWEEN from '@tweenjs/tween.js';
 const loadingScreen = document.querySelector('.loading-screen');
 const loadingProgress = document.querySelector('.loading-progress');
 
-// District coordinates (you'll need to adjust these based on your model)
+// District markers with their camera positions
 const districts = [
-    { name: 'Central Baltimore', position: { x: 0, y: 1, z: 0 } },
-    { name: 'East Baltimore', position: { x: 2, y: 1, z: 0 } },
-    { name: 'West Baltimore', position: { x: -2, y: 1, z: 0 } },
-    { name: 'South Baltimore', position: { x: 0, y: 1, z: 2 } },
-    { name: 'North Baltimore', position: { x: 0, y: 1, z: -2 } }
+    {
+        name: 'Baltimore Inner Harbor',
+        pageName: 'Inner Harbor',
+        markerFile: 'marker_baltimore_inner_harbor_subject_subject_marker_1735195982517.json',
+        cameraFile: 'marker_baltimore_inner_harbor__1735194251759.json'
+    },
+    {
+        name: 'Federal Hill',
+        pageName: 'Federal Hill',
+        markerFile: 'marker_federal_hill_subject__subject_marker_1735196627275.json',
+        cameraFile: 'marker_federal_hill_marker_camera_marker_1735196516687.json'
+    },
+    {
+        name: 'Canton',
+        pageName: 'Canton',
+        markerFile: 'marker_canton_subject_subject_marker_1735196858094.json',
+        cameraFile: 'marker_canton_camera_camera_marker_1735196801332.json'
+    },
+    {
+        name: 'Fells Point',
+        pageName: 'Fells Point',
+        markerFile: 'marker_fells_point_subject__subject_marker_1735197073807.json',
+        cameraFile: 'marker_fells_point_camera_camera_marker_1735197031057.json'
+    },
+    {
+        name: 'Mount Vernon',
+        pageName: 'Mount Vernon',
+        markerFile: 'marker_mount_vernon_subject__subject_marker_1735197588128.json',
+        cameraFile: 'marker_mount_vernon_camera_camera_marker_1735197513333.json'
+    }
 ];
+
+// Function to load marker data
+async function loadMarkerData(markerFile) {
+    try {
+        const response = await fetch(`markers/${markerFile}`);
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error(`Error loading marker data from ${markerFile}:`, error);
+        return null;
+    }
+}
 
 try {
     // Scene Setup
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 5;
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
+    camera.position.set(0, 1000, 2000); // Initial camera position
 
     // Initialize renderer with antialias and alpha
     const renderer = new THREE.WebGLRenderer({ 
@@ -45,13 +82,22 @@ try {
     document.body.appendChild(labelRenderer.domElement);
 
     // Function to create district markers
-    function createDistrictMarkers() {
-        districts.forEach(district => {
+    async function createDistrictMarkers() {
+        for (const district of districts) {
+            const markerData = await loadMarkerData(district.markerFile);
+            if (!markerData) continue;
+
             // Create marker geometry
-            const markerGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+            const markerGeometry = new THREE.SphereGeometry(5, 16, 16);
             const markerMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
             const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-            marker.position.set(district.position.x, district.position.y, district.position.z);
+            
+            // Set position from marker data
+            marker.position.set(
+                parseFloat(markerData.subject.x),
+                parseFloat(markerData.subject.y),
+                parseFloat(markerData.subject.z)
+            );
             scene.add(marker);
 
             // Create label
@@ -63,10 +109,43 @@ try {
             labelDiv.style.padding = '5px 10px';
             labelDiv.style.borderRadius = '5px';
             labelDiv.style.fontSize = '14px';
+            
+            // Make label clickable
+            labelDiv.style.cursor = 'pointer';
+            labelDiv.onclick = async () => {
+                const cameraData = await loadMarkerData(district.cameraFile);
+                if (cameraData) {
+                    // Create camera position and target vectors
+                    const targetPos = new THREE.Vector3(
+                        parseFloat(cameraData.target.x),
+                        parseFloat(cameraData.target.y),
+                        parseFloat(cameraData.target.z)
+                    );
+                    const cameraPos = new THREE.Vector3(
+                        parseFloat(cameraData.camera.x),
+                        parseFloat(cameraData.camera.y),
+                        parseFloat(cameraData.camera.z)
+                    );
+
+                    // Animate camera movement
+                    new TWEEN.Tween(camera.position)
+                        .to(cameraPos, 1000)
+                        .easing(TWEEN.Easing.Cubic.InOut)
+                        .start();
+
+                    // Animate controls target
+                    new TWEEN.Tween(controls.target)
+                        .to(targetPos, 1000)
+                        .easing(TWEEN.Easing.Cubic.InOut)
+                        .start();
+                }
+            };
+
             const label = new CSS2DObject(labelDiv);
-            label.position.set(district.position.x, district.position.y + 0.2, district.position.z);
+            label.position.copy(marker.position);
+            label.position.y += 20; // Offset label above marker
             scene.add(label);
-        });
+        }
     }
 
     // Initialize loaders
@@ -87,11 +166,6 @@ try {
             console.log('Model loaded successfully');
             scene.add(gltf.scene);
             createDistrictMarkers(); // Add markers after model is loaded
-            
-            // Center camera on model
-            const box = new THREE.Box3().setFromObject(gltf.scene);
-            const center = box.getCenter(new THREE.Vector3());
-            gltf.scene.position.sub(center);
             
             // Hide loading screen
             if (loadingScreen) {
@@ -120,6 +194,7 @@ try {
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
+    controls.maxDistance = 5000;
 
     // Animation Loop
     function animate() {
