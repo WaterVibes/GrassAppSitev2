@@ -47,7 +47,9 @@ camera.lookAt(initialTarget);
 
 // Add very subtle fog to the scene (only for edges)
 const fogColor = 0x000000;
-scene.fog = new THREE.Fog(fogColor, 15000, 20000);  // Very far fog
+const fogNear = 15000;  // Define fog variables in global scope
+const fogFar = 20000;   // Define fog variables in global scope
+scene.fog = new THREE.Fog(fogColor, fogNear, fogFar);
 
 // Initialize renderer
 renderer = new THREE.WebGLRenderer({ 
@@ -109,8 +111,8 @@ function updateFog() {
     const maxDistance = controls.maxDistance;
     
     // Much more gradual fog falloff
-    scene.fog.near = Math.max(fogNear * (distanceToCenter / maxDistance), 5000);
-    scene.fog.far = Math.min(fogFar * (distanceToCenter / maxDistance), maxDistance * 4);
+    scene.fog.near = Math.max(scene.fog.near * (distanceToCenter / maxDistance), 5000);
+    scene.fog.far = Math.min(scene.fog.far * (distanceToCenter / maxDistance), maxDistance * 4);
 }
 
 // Function to constrain camera position
