@@ -30,18 +30,18 @@ const introMarkerData = {
     }
 };
 
-// Set initial camera position with correct orientation (Y is up)
+// Set initial camera position with correct orientation
 camera.position.set(
     parseFloat(introMarkerData.camera.x),
-    Math.abs(parseFloat(introMarkerData.camera.y)) + 200, // Ensure positive Y and add height
-    parseFloat(introMarkerData.camera.z)
+    parseFloat(introMarkerData.camera.z), // Use Z as up axis
+    -parseFloat(introMarkerData.camera.y)  // Negate Y for correct orientation
 );
 
 // Set initial camera target
 const initialTarget = new THREE.Vector3(
     parseFloat(introMarkerData.target.x),
-    0, // Look at ground level
-    parseFloat(introMarkerData.target.z)
+    parseFloat(introMarkerData.target.z), // Use Z as up axis
+    -parseFloat(introMarkerData.target.y)  // Negate Y for correct orientation
 );
 camera.lookAt(initialTarget);
 
@@ -211,11 +211,11 @@ async function createMarker(data, color = 0x00ff00) {
     const markerMaterial = new THREE.MeshBasicMaterial({ color });
     const marker = new THREE.Mesh(markerGeometry, markerMaterial);
     
-    // Set position from marker data with Y up
+    // Set position from marker data with correct orientation
     marker.position.set(
         parseFloat(markerData.subject.x),
-        parseFloat(markerData.subject.y),
-        parseFloat(markerData.subject.z)
+        parseFloat(markerData.subject.z), // Use Z as up axis
+        -parseFloat(markerData.subject.y)  // Negate Y for correct orientation
     );
     scene.add(marker);
 
@@ -234,16 +234,16 @@ async function createMarker(data, color = 0x00ff00) {
     labelDiv.onclick = async () => {
         const cameraData = await loadMarkerData(data.cameraFile);
         if (cameraData) {
-            // Create camera position and target vectors with Y up
+            // Create camera position and target vectors with correct orientation
             const targetPos = new THREE.Vector3(
                 parseFloat(cameraData.target.x),
-                parseFloat(cameraData.target.y),
-                parseFloat(cameraData.target.z)
+                parseFloat(cameraData.target.z), // Use Z as up axis
+                -parseFloat(cameraData.target.y)  // Negate Y for correct orientation
             );
             const cameraPos = new THREE.Vector3(
                 parseFloat(cameraData.camera.x),
-                parseFloat(cameraData.camera.y),
-                parseFloat(cameraData.camera.z)
+                parseFloat(cameraData.camera.z), // Use Z as up axis
+                -parseFloat(cameraData.camera.y)  // Negate Y for correct orientation
             );
 
             // Animate camera movement
@@ -345,9 +345,9 @@ try {
             console.log('Model loaded successfully');
             const model = gltf.scene;
             
-            // Keep model oriented with Y up
+            // Set correct model orientation
             model.scale.set(1, 1, 1);
-            model.rotation.set(0, 0, 0); // Reset rotation
+            model.rotation.x = Math.PI / 2; // Rotate model to align with world coordinates
             
             // Improve material settings
             model.traverse((node) => {
@@ -359,12 +359,6 @@ try {
                         node.material.side = THREE.DoubleSide;
                         node.material.transparent = false;
                         node.material.opacity = 1;
-                        if (node.material.color) {
-                            const color = node.material.color;
-                            color.r = Math.min(color.r * 1.2, 1);
-                            color.g = Math.min(color.g * 1.2, 1);
-                            color.b = Math.min(color.b * 1.2, 1);
-                        }
                     }
                 }
             });
@@ -383,7 +377,7 @@ try {
             // Update controls based on model size
             controls.target.set(0, 0, 0);
             controls.maxDistance = maxDim * 0.8;
-            controls.minDistance = maxDim * 0.2; // Increased minimum distance
+            controls.minDistance = maxDim * 0.2;
             
             createAllMarkers();
             
