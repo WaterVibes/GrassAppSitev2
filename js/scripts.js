@@ -512,18 +512,17 @@ function showInfoCard(pageName) {
     }
 
     const cardInfo = pageInfo.cards[currentCardIndex];
-    const isMobile = isMobileDevice();  // Ensure we use isMobile consistently
+    const isMobile = isMobileDevice();
 
-    // Create card container with mobile-responsive styles
+    // Create card container with centered positioning
     const card = document.createElement('div');
     card.className = 'info-card';
     
     card.style.cssText = `
         position: fixed;
-        ${isMobile ? 'bottom: -100%;' : 'right: -400px;'}
-        ${isMobile ? 'left: 5%;' : 'top: 50%;'}
-        width: ${isMobile ? '90%' : '350px'};
-        ${isMobile ? '' : 'transform: translateY(-50%);'}
+        ${isMobile ? 'bottom: -100%;' : 'top: 50%'};
+        ${isMobile ? 'left: 5%; width: 90%;' : 'left: 50%; width: 400px'};
+        transform: ${isMobile ? 'none' : 'translate(-50%, -50%)'};
         background: rgba(0, 0, 0, 0.9);
         backdrop-filter: blur(10px);
         border-radius: ${isMobile ? '20px 20px 0 0' : '20px'};
@@ -534,8 +533,8 @@ function showInfoCard(pageName) {
         transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         z-index: 1000;
         opacity: 0;
-        max-height: ${isMobile ? '80vh' : 'none'};
-        overflow-y: ${isMobile ? 'auto' : 'visible'};
+        max-height: ${isMobile ? '80vh' : '80vh'};
+        overflow-y: auto;
         -webkit-overflow-scrolling: touch;
     `;
 
@@ -663,8 +662,6 @@ function showInfoCard(pageName) {
     setTimeout(() => {
         if (isMobile) {
             card.style.bottom = '0';
-        } else {
-            card.style.right = '20px';
         }
         card.style.opacity = '1';
     }, 100);
@@ -799,11 +796,76 @@ async function showPageImpl(pageName) {
     }
 }
 
-// After all the scene setup is complete, replace the placeholder functions with their implementations
+// Add navigation panel collapse functionality
+function collapseNavPanel() {
+    const navPanel = document.querySelector('.nav-container');
+    if (!navPanel) return;
+
+    // Add collapse button if it doesn't exist
+    if (!document.querySelector('.nav-collapse-btn')) {
+        const collapseBtn = document.createElement('button');
+        collapseBtn.className = 'nav-collapse-btn';
+        collapseBtn.innerHTML = '◀';  // Left arrow
+        collapseBtn.style.cssText = `
+            position: absolute;
+            right: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            color: #00ff00;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 0 5px 5px 0;
+            transition: all 0.3s ease;
+            z-index: 999;
+        `;
+        collapseBtn.onclick = toggleNavPanel;
+        navPanel.appendChild(collapseBtn);
+    }
+
+    // Add CSS for panel animation
+    const style = document.createElement('style');
+    style.textContent = `
+        .nav-container {
+            transition: transform 0.3s ease;
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 1000;
+        }
+        .nav-container.collapsed {
+            transform: translateX(-100%);
+        }
+        .nav-container.collapsed .nav-collapse-btn {
+            right: -30px;
+            transform: translateY(-50%) rotate(180deg);
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function toggleNavPanel() {
+    const navPanel = document.querySelector('.nav-container');
+    if (!navPanel) return;
+    
+    navPanel.classList.toggle('collapsed');
+    const isCollapsed = navPanel.classList.contains('collapsed');
+    localStorage.setItem('navPanelCollapsed', isCollapsed);
+}
+
+// Update button click handlers to collapse panel
 document.addEventListener('DOMContentLoaded', () => {
-    // Replace placeholder functions with actual implementations
-    window.selectDistrict = selectDistrictImpl;
-    window.showPage = showPageImpl;
+    // Initialize nav panel collapse functionality
+    collapseNavPanel();
+
+    // Restore nav panel state
+    const isCollapsed = localStorage.getItem('navPanelCollapsed') === 'true';
+    const navPanel = document.querySelector('.nav-container');
+    if (isCollapsed && navPanel) {
+        navPanel.classList.add('collapsed');
+    }
 
     // Handle district buttons
     const districtButtons = document.querySelectorAll('.districts-container button');
@@ -821,8 +883,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (districtName) {
                 console.log('Moving to district:', districtName);
                 window.selectDistrict(districtName);
-            } else {
-                console.error('No mapping found for district button:', buttonText);
+                // Collapse nav panel after selection
+                const navPanel = document.querySelector('.nav-container');
+                if (navPanel && !navPanel.classList.contains('collapsed')) {
+                    toggleNavPanel();
+                }
             }
         });
     });
@@ -840,6 +905,11 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             const pageName = pageMap[buttonText] || buttonText;
             window.showPage(pageName);
+            // Collapse nav panel after selection
+            const navPanel = document.querySelector('.nav-container');
+            if (navPanel && !navPanel.classList.contains('collapsed')) {
+                toggleNavPanel();
+            }
         });
     });
 });
