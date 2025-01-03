@@ -14,7 +14,7 @@ const loadingProgress = document.querySelector('.loading-progress');
 
 // Initialize scene and camera
 scene = new THREE.Scene();
-camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000);
+camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 20000);
 
 // Set initial camera position from intro marker
 const introMarkerData = {
@@ -47,8 +47,8 @@ camera.lookAt(initialTarget);
 
 // Add fog to the scene
 const fogColor = 0x000000;
-const fogNear = 4000;  // Increased from 3000
-const fogFar = 8000;   // Increased from 6000
+const fogNear = 8000;  // Significantly increased
+const fogFar = 12000;  // Significantly increased
 scene.fog = new THREE.Fog(fogColor, fogNear, fogFar);
 
 // Initialize renderer
@@ -75,10 +75,10 @@ labelRenderer.domElement.style.pointerEvents = 'auto';
 document.body.appendChild(labelRenderer.domElement);
 
 // Add lights with adjusted settings
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); // Increased ambient light
+const ambientLight = new THREE.AmbientLight(0xffffff, 1.0); // Full intensity
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2); // Increased intensity
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5); // Increased intensity
 directionalLight.position.set(2000, 2000, 2000);
 directionalLight.castShadow = true;
 directionalLight.shadow.mapSize.width = 4096; // Increased shadow resolution
@@ -91,8 +91,13 @@ directionalLight.shadow.camera.top = 2000;
 directionalLight.shadow.camera.bottom = -2000;
 scene.add(directionalLight);
 
-// Add hemisphere light for better ambient lighting
-const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
+// Add a second directional light from another angle
+const directionalLight2 = new THREE.DirectionalLight(0xffffff, 1.0);
+directionalLight2.position.set(-2000, 2000, -2000);
+scene.add(directionalLight2);
+
+// Increase hemisphere light intensity
+const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
 scene.add(hemisphereLight);
 
 // Initialize controls with adjusted constraints
@@ -113,9 +118,9 @@ function updateFog() {
     const distanceToCenter = camera.position.length();
     const maxDistance = controls.maxDistance;
     
-    // Adjust fog density based on camera distance with more gradual falloff
-    scene.fog.near = Math.max(fogNear * (distanceToCenter / maxDistance), 2000);  // Increased minimum from 500
-    scene.fog.far = Math.min(fogFar * (distanceToCenter / maxDistance), maxDistance * 2);  // Increased multiplier
+    // Much more gradual fog falloff
+    scene.fog.near = Math.max(fogNear * (distanceToCenter / maxDistance), 5000);
+    scene.fog.far = Math.min(fogFar * (distanceToCenter / maxDistance), maxDistance * 4);
 }
 
 // Function to constrain camera position
@@ -393,8 +398,8 @@ try {
             controls.minDistance = maxDim * 0.2;
             
             // Update fog based on model size
-            scene.fog.near = maxDim * 1.2;  // Increased from 0.7
-            scene.fog.far = maxDim * 2;     // Increased from 1.2
+            scene.fog.near = maxDim * 2;    // Much further
+            scene.fog.far = maxDim * 4;     // Much further
             
             createAllMarkers();
             
