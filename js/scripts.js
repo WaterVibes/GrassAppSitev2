@@ -58,18 +58,24 @@ camera.lookAt(initialTarget);
 
 // Update fog settings for better performance
 const fogColor = 0x000000;
-const fogNear = 1200;  // Start fog much further out
-const fogFar = 1500;   // End fog at max distance
+const fogNear = 1200;
+const fogFar = 1500;
 scene.fog = new THREE.Fog(fogColor, fogNear, fogFar);
 
-// Optimize fog update function
+// Optimize fog update function to be circular and follow camera
 function updateFog() {
-    const distanceToCenter = camera.position.length();
-    if (distanceToCenter > 1000) {  // Only apply fog when near edges
-        scene.fog.near = 1200;
-        scene.fog.far = 1500;
+    const distanceFromCenter = Math.sqrt(
+        camera.position.x * camera.position.x + 
+        camera.position.z * camera.position.z
+    );
+    
+    // Calculate fog based on radial distance
+    if (distanceFromCenter > 800) {  // Start fog earlier for smoother transition
+        const fogIntensity = (distanceFromCenter - 800) / 400;  // Gradual increase
+        scene.fog.near = 1200 - (fogIntensity * 400);  // Fog starts closer as you move out
+        scene.fog.far = 1500 - (fogIntensity * 200);   // Fog ends sooner as you move out
     } else {
-        scene.fog.near = 1500;  // Effectively disable fog when not near edges
+        scene.fog.near = 1500;  // No fog when close to center
         scene.fog.far = 2000;
     }
 }
@@ -400,43 +406,103 @@ async function selectDistrictImpl(districtName) {
     }
 }
 
-// Add page content data
+// Add page content data with multiple cards per page
 const pageContent = {
     aboutUs: {
-        title: "GrassApp: Delivery for the Culture",
-        content: "GrassApp bridges Baltimore's cannabis community with licensed dispensaries, offering a seamless, tech-forward delivery experience. Built on trust, culture, and sustainability, we're more than a service—we're a movement. By prioritizing eco-friendly practices, local collaborations, and transparent operations, GrassApp redefines how cannabis connects people and communities.",
-        icon: '🌿'
+        cards: [
+            {
+                title: "Who We Are",
+                content: "GrassApp is more than a delivery service; we're a bridge connecting people to trusted, local dispensaries in a way that's safe, seamless, and culturally relevant.\nFounded in Baltimore, our mission is rooted in uplifting communities, providing access to cannabis responsibly, and celebrating the unique spirit of the people we serve.\nWhether you're a medical cannabis patient or a business partner, GrassApp delivers more than products—we deliver trust.",
+                icon: '🌿'
+            },
+            {
+                title: "Our Commitment to the Community",
+                content: "GrassApp isn't just about convenience; it's about connection.\nSupporting local businesses and artists to ensure the community thrives.\nCollaborating with dispensaries to provide personalized service.\nInnovating for sustainability by prioritizing eco-friendly practices, such as plantable packaging and waste reduction initiatives.",
+                icon: '🤝'
+            },
+            {
+                title: "Why Choose GrassApp?",
+                content: "Fully digital and easy-to-use platform designed for today's tech-savvy customers.\nCommitted to transparency, efficiency, and fostering relationships with the people and businesses that make Baltimore special.\nInspired by the culture and dedicated to setting a new standard for cannabis delivery.",
+                icon: '✨'
+            }
+        ]
     },
     medicalPatient: {
-        title: "Simplified Access for Medical Patients",
-        content: "GrassApp ensures secure and discreet delivery for Maryland's registered medical cannabis patients. Easily browse licensed dispensaries, compare products, and track your delivery in real-time. Not registered yet? Begin your journey through the Maryland Patient Registration Page, and let GrassApp take care of the rest.",
-        link: "https://onestop.md.gov/public_profiles/adult-patient-registration-601c0fd9f9d7557af267e1e1",
-        icon: '💊'
+        cards: [
+            {
+                title: "How GrassApp Supports Patients",
+                content: "We understand the importance of reliable access to your medical cannabis products. GrassApp is here to simplify the process, ensuring every delivery is discreet, secure, and timely.\nBrowse licensed dispensaries, compare product options, and track your delivery in real-time—all from the comfort of your home.",
+                icon: '💊'
+            },
+            {
+                title: "Steps to Register as a Patient",
+                content: "Becoming a registered medical cannabis patient in Maryland is simple. Follow these steps to get started:\nVisit the Maryland Patient Registration Page.\nProvide your personal information and upload the required documentation.\nOnce approved, browse GrassApp to find dispensaries tailored to your medical needs.",
+                icon: '📝',
+                link: "https://onestop.md.gov/public_profiles/adult-patient-registration-601c0fd9f9d7557af267e1e1"
+            },
+            {
+                title: "Your Privacy Matters",
+                content: "GrassApp is committed to protecting your medical and personal information. We comply with HIPAA regulations and use advanced encryption to keep your data secure.",
+                icon: '🔒'
+            }
+        ]
     },
     partnerWithUs: {
-        title: "Empowering Dispensaries, One Delivery at a Time",
-        content: "GrassApp partners with local dispensaries to expand their reach and enhance their customer experience. With real-time inventory integration and seamless logistics, we handle the details while you focus on your customers. Ready to grow your business? Let's create something extraordinary together.",
-        contact: "contact@thegrassapp.com",
-        icon: '🤝'
+        cards: [
+            {
+                title: "Why Partner with GrassApp?",
+                content: "Partnering with GrassApp connects your dispensary with a growing network of medical cannabis patients seeking reliable delivery services.\nOur platform integrates seamlessly with your existing operations, allowing you to focus on serving your customers while we handle the logistics.",
+                icon: '🤝'
+            },
+            {
+                title: "How We Work Together",
+                content: "GrassApp uses live API integration to keep your inventory updated in real time, ensuring accurate product availability for customers.\nOur delivery system is designed to reflect your dispensary's professionalism, offering a service that mirrors the quality you provide in-store.",
+                icon: '⚡'
+            },
+            {
+                title: "Steps to Join",
+                content: "Becoming a GrassApp partner is straightforward:\nReach out to our team to discuss your dispensary's unique needs.\nSet up API keys and configure real-time inventory tracking.\nSit back as GrassApp connects you with a wider audience of patients and customers.",
+                icon: '🚀',
+                contact: "contact@thegrassapp.com"
+            }
+        ]
     },
     deliveryDriver: {
-        title: "Drive with GrassApp and Make a Difference",
-        content: "Join GrassApp as a certified caregiver and play a vital role in Baltimore's cannabis delivery revolution. With flexible opportunities and the ability to directly impact patient lives, being a GrassApp driver means professionalism, purpose, and pride. Start your journey today by registering as a caregiver through the Maryland Caregiver Registration Page.",
-        link: "https://onestop.md.gov/public_profiles/caregiver-registration-601c0fd5f9d7557af267cee1",
-        icon: '🚗'
+        cards: [
+            {
+                title: "Be Part of Something Bigger",
+                content: "Driving with GrassApp isn't just about making deliveries; it's about being part of a movement to redefine cannabis delivery in Baltimore.\nAs a caregiver-certified driver, you'll play a vital role in ensuring patients and customers get their orders on time and with care.",
+                icon: '🚗'
+            },
+            {
+                title: "What You Need to Get Started",
+                content: "To join the GrassApp team, you'll need:\nMMCC Caregiver Certification: Learn how to register at the Maryland Caregiver Registration Page.\nA reliable vehicle for deliveries.\nA dedication to professionalism and excellent customer service.",
+                icon: '📋',
+                link: "https://onestop.md.gov/public_profiles/caregiver-registration-601c0fd5f9d7557af267cee1"
+            },
+            {
+                title: "Your Journey Begins Here",
+                content: "Joining GrassApp means flexible opportunities, access to a growing community of cannabis professionals, and the chance to make a difference in patients' lives.\nReady to start? Let GrassApp guide you every step of the way, from registration to your first delivery.",
+                icon: '🌟'
+            }
+        ]
     }
 };
 
-// Function to create and animate info card
+// Update showInfoCard function to handle multiple cards
+let currentCardIndex = 0;
+
 function showInfoCard(pageName) {
+    const pageInfo = pageContent[pageName];
+    if (!pageInfo || !pageInfo.cards || !pageInfo.cards.length) return;
+
     // Remove any existing info cards first
     const existingCard = document.querySelector('.info-card');
     if (existingCard) {
         existingCard.remove();
     }
 
-    const pageInfo = pageContent[pageName];
-    if (!pageInfo) return;
+    const cardInfo = pageInfo.cards[currentCardIndex];
 
     // Create card container with mobile-responsive styles
     const card = document.createElement('div');
@@ -471,7 +537,7 @@ function showInfoCard(pageName) {
     // Create icon with adjusted size for mobile
     const icon = document.createElement('div');
     icon.className = 'card-icon';
-    icon.textContent = pageInfo.icon;
+    icon.textContent = cardInfo.icon;
     icon.style.cssText = `
         font-size: ${isMobile ? '42px' : '48px'};  // Increased from 36px
         margin-bottom: ${iMobile ? '15px' : '20px'};  // Increased margins
@@ -481,7 +547,7 @@ function showInfoCard(pageName) {
 
     // Create title with adjusted size for mobile
     const title = document.createElement('h2');
-    title.textContent = pageInfo.title;
+    title.textContent = cardInfo.title;
     title.style.cssText = `
         font-size: ${iMobile ? '22px' : '24px'};  // Increased from 20px
         margin-bottom: ${iMobile ? '15px' : '20px'};
@@ -493,7 +559,7 @@ function showInfoCard(pageName) {
 
     // Create content with adjusted size for mobile
     const content = document.createElement('p');
-    content.textContent = pageInfo.content;
+    content.textContent = cardInfo.content;
     content.style.cssText = `
         font-size: ${iMobile ? '16px' : '16px'};  // Increased from 14px
         line-height: 1.8;  // Increased from 1.6
@@ -504,10 +570,10 @@ function showInfoCard(pageName) {
     `;
 
     // Add link or contact if available with mobile-optimized styles
-    if (pageInfo.link || pageInfo.contact) {
+    if (cardInfo.link || cardInfo.contact) {
         const link = document.createElement('a');
-        link.href = pageInfo.link || `mailto:${pageInfo.contact}`;
-        link.textContent = pageInfo.link ? 'Register Now' : 'Contact Us';
+        link.href = cardInfo.link || `mailto:${cardInfo.contact}`;
+        link.textContent = cardInfo.link ? 'Register Now' : 'Contact Us';
         link.target = '_blank';
         link.style.cssText = `
             display: block;  // Changed to block for full width on mobile
@@ -597,6 +663,66 @@ function showInfoCard(pageName) {
         }
         card.style.opacity = '1';
     }, 100);
+
+    // Add navigation dots for multiple cards
+    const dotsContainer = document.createElement('div');
+    dotsContainer.style.cssText = `
+        position: absolute;
+        bottom: ${isMobile ? '60px' : '20px'};
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    `;
+
+    pageInfo.cards.forEach((_, index) => {
+        const dot = document.createElement('div');
+        dot.style.cssText = `
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: ${index === currentCardIndex ? '#00ff00' : 'rgba(0, 255, 0, 0.3)'};
+            cursor: pointer;
+            transition: all 0.3s ease;
+        `;
+        dot.onclick = () => {
+            currentCardIndex = index;
+            showInfoCard(pageName);
+        };
+        dotsContainer.appendChild(dot);
+    });
+
+    card.appendChild(dotsContainer);
+
+    // Add swipe navigation for mobile
+    let touchStartX = 0;
+    card.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+    });
+
+    card.addEventListener('touchend', (e) => {
+        const touchEndX = e.changedTouches[0].clientX;
+        const diff = touchStartX - touchEndX;
+
+        if (Math.abs(diff) > 50) {  // Minimum swipe distance
+            if (diff > 0 && currentCardIndex < pageInfo.cards.length - 1) {
+                // Swipe left
+                currentCardIndex++;
+                showInfoCard(pageName);
+            } else if (diff < 0 && currentCardIndex > 0) {
+                // Swipe right
+                currentCardIndex--;
+                showInfoCard(pageName);
+            }
+        }
+    });
+
+    // Reset card index when changing pages
+    if (card.dataset.pageName !== pageName) {
+        currentCardIndex = 0;
+        card.dataset.pageName = pageName;
+    }
 }
 
 // Update showPageImpl to show info card after camera movement
