@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   root: './',
-  base: '/grassappsitev2/',
+  base: '/GrassAppSitev2/',
   server: {
     port: 3001,
     open: true

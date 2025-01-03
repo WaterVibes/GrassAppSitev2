@@ -28,17 +28,17 @@ try {
 
     // Initialize loaders
     const dracoLoader = new DRACOLoader();
-    console.log('Setting Draco decoder path:', 'https://watervibes.github.io/grassappsitev2/draco-decoder/');
-    dracoLoader.setDecoderPath('https://watervibes.github.io/grassappsitev2/draco-decoder/');
+    console.log('Setting Draco decoder path:', 'https://watervibes.github.io/GrassAppSitev2/draco-decoder/');
+    dracoLoader.setDecoderPath('https://watervibes.github.io/GrassAppSitev2/draco-decoder/');
     dracoLoader.setDecoderConfig({ type: 'js' }); // Explicitly use JS decoder
 
     const gltfLoader = new GLTFLoader();
     gltfLoader.setDRACOLoader(dracoLoader);
 
     // Load the model
-    console.log('Starting to load model from:', 'https://watervibes.github.io/grassappsitev2/models/baltimore_city_optimized_v2.glb');
+    console.log('Starting to load model from:', 'https://watervibes.github.io/GrassAppSitev2/models/baltimore_city_optimized_v2.glb');
     gltfLoader.load(
-        'https://watervibes.github.io/grassappsitev2/models/baltimore_city_optimized_v2.glb',
+        'https://watervibes.github.io/GrassAppSitev2/models/baltimore_city_optimized_v2.glb',
         (gltf) => {
             console.log('Model loaded successfully');
             scene.add(gltf.scene);
