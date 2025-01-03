@@ -9,15 +9,8 @@ import * as TWEEN from '@tweenjs/tween.js';
 let scene, camera, renderer, labelRenderer, controls;
 
 // Make functions available globally immediately
-window.selectDistrict = function(districtName) {
-    // This will be replaced with the full implementation once it's defined
-    console.log('Placeholder selectDistrict, will be replaced with full implementation');
-};
-
-window.showPage = function(pageName) {
-    // This will be replaced with the full implementation once it's defined
-    console.log('Placeholder showPage, will be replaced with full implementation');
-};
+window.selectDistrict = selectDistrictImpl;
+window.showPage = showPageImpl;
 
 // Get loading elements
 const loadingScreen = document.querySelector('.loading-screen');
@@ -56,36 +49,36 @@ const initialTarget = new THREE.Vector3(
 );
 camera.lookAt(initialTarget);
 
-// Update fog settings for better immersion
+// Update fog settings for better visibility
 const fogColor = 0x000000;
-const fogNear = 800;  // Start fog closer
-const fogFar = 1500;
+const fogNear = 2000;  // Pushed back significantly from 800
+const fogFar = 3000;   // Pushed back significantly from 1500
 scene.fog = new THREE.Fog(fogColor, fogNear, fogFar);
 
-// Enhanced fog update function for better immersion
+// Enhanced fog update function with reduced intensity
 function updateFog() {
     const distanceFromCenter = Math.sqrt(
         camera.position.x * camera.position.x + 
         camera.position.z * camera.position.z
     );
     
-    // Calculate height-based fog
-    const heightFactor = Math.max(0, Math.min(1, camera.position.y / 1000));
+    // Calculate height-based fog with reduced intensity
+    const heightFactor = Math.max(0, Math.min(1, camera.position.y / 2000));  // Increased from 1000
     
-    // Calculate distance-based fog
-    const distanceFactor = Math.max(0, Math.min(1, distanceFromCenter / 1000));
+    // Calculate distance-based fog with reduced intensity
+    const distanceFactor = Math.max(0, Math.min(1, distanceFromCenter / 2000));  // Increased from 1000
     
     // Combine both factors for dynamic fog
     const fogFactor = Math.max(heightFactor, distanceFactor);
     
-    // Apply fog based on combined factors
-    if (fogFactor > 0.3) {  // Start fog effect earlier
-        const intensity = (fogFactor - 0.3) / 0.7;  // Normalize to 0-1 range
-        scene.fog.near = 800 - (intensity * 400);   // Fog starts closer as factors increase
-        scene.fog.far = 1500 - (intensity * 500);   // Fog ends sooner as factors increase
+    // Apply fog based on combined factors with increased distances
+    if (fogFactor > 0.5) {  // Increased threshold from 0.3
+        const intensity = (fogFactor - 0.5) / 0.5;  // Normalized to 0-1 range
+        scene.fog.near = 2000 - (intensity * 500);   // Increased base distance
+        scene.fog.far = 3000 - (intensity * 500);    // Increased base distance
     } else {
-        scene.fog.near = 1000;  // Default fog distance when close to center and low
-        scene.fog.far = 2000;
+        scene.fog.near = 2500;  // Increased default fog distance
+        scene.fog.far = 3500;   // Increased default fog distance
     }
 }
 
