@@ -156,7 +156,9 @@ try {
     // Scene Setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
-    camera.position.set(0, 1000, 2000); // Initial camera position
+    // Set initial camera position higher and further back for better overview
+    camera.position.set(0, 2000, 3000);
+    camera.lookAt(0, 0, 0);
 
     // Initialize renderer with antialias and alpha
     const renderer = new THREE.WebGLRenderer({ 
@@ -169,6 +171,15 @@ try {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     document.body.appendChild(renderer.domElement);
+
+    // Add ambient light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+    scene.add(ambientLight);
+
+    // Add directional light
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(0, 1, 0);
+    scene.add(directionalLight);
 
     // Initialize CSS2D renderer for labels
     const labelRenderer = new CSS2DRenderer();
@@ -194,7 +205,23 @@ try {
         modelPath,
         (gltf) => {
             console.log('Model loaded successfully');
-            scene.add(gltf.scene);
+            
+            // Add the model to the scene
+            const model = gltf.scene;
+            scene.add(model);
+
+            // Center the model
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            model.position.sub(center);
+
+            // Log model information
+            console.log('Model bounds:', {
+                min: box.min,
+                max: box.max,
+                center: center
+            });
+
             createAllMarkers(); // Add all markers after model is loaded
             
             // Hide loading screen
@@ -225,6 +252,9 @@ try {
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.maxDistance = 5000;
+    controls.minDistance = 100;  // Add minimum distance
+    controls.maxPolarAngle = Math.PI / 2;  // Prevent camera from going below the ground
+    controls.target.set(0, 0, 0);  // Set initial target to center
 
     // Animation Loop
     function animate() {
