@@ -133,17 +133,22 @@ const pointLight5 = new THREE.PointLight(0xffffff, 1.0, 2500);
 pointLight5.position.set(-500, 1000, 500);
 scene.add(pointLight5);
 
+// Function to check if device is mobile
+function isMobileDevice() {
+    return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
 // Initialize controls with adjusted constraints
 controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 controls.screenSpacePanning = false;
 controls.enablePan = true;
-controls.panSpeed = 0.5;
-controls.minDistance = 100;
-controls.maxDistance = 1500;
-controls.maxPolarAngle = Math.PI / 2.1; // Prevent going below horizon
-controls.minPolarAngle = Math.PI / 6;   // Keep camera above map
+controls.panSpeed = isMobileDevice() ? 0.3 : 0.5;  // Slower pan on mobile
+controls.minDistance = isMobileDevice() ? 50 : 100;  // Allow closer zoom on mobile
+controls.maxDistance = isMobileDevice() ? 1000 : 1500;  // Limit max distance on mobile
+controls.maxPolarAngle = Math.PI / 2.1;
+controls.minPolarAngle = Math.PI / 6;
 controls.target.copy(initialTarget);
 
 // Function to update fog based on camera position
@@ -414,59 +419,64 @@ function showInfoCard(pageName) {
     const pageInfo = pageContent[pageName];
     if (!pageInfo) return;
 
-    // Create card container
+    // Create card container with mobile-responsive styles
     const card = document.createElement('div');
     card.className = 'info-card';
+    
+    // Adjust card positioning and size based on device
+    const isMobile = isMobileDevice();
     card.style.cssText = `
         position: fixed;
-        right: -400px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 350px;
+        ${isMobile ? 'bottom: -100%;' : 'right: -400px;'}
+        ${isMobile ? 'left: 0;' : 'top: 50%;'}
+        ${isMobile ? 'width: 100%;' : 'width: 350px;'}
+        ${isMobile ? 'transform: none;' : 'transform: translateY(-50%);'}
         background: rgba(0, 0, 0, 0.85);
         backdrop-filter: blur(10px);
-        border-radius: 20px;
-        padding: 25px;
+        border-radius: ${isMobile ? '20px 20px 0 0' : '20px'};
+        padding: ${isMobile ? '20px 15px' : '25px'};
         color: white;
         box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
         border: 1px solid rgba(0, 255, 0, 0.1);
         transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         z-index: 1000;
         opacity: 0;
+        max-height: ${isMobile ? '70vh' : 'none'};
+        overflow-y: ${isMobile ? 'auto' : 'visible'};
     `;
 
-    // Create icon
+    // Create icon with adjusted size for mobile
     const icon = document.createElement('div');
     icon.className = 'card-icon';
     icon.textContent = pageInfo.icon;
     icon.style.cssText = `
-        font-size: 48px;
-        margin-bottom: 15px;
+        font-size: ${isMobile ? '36px' : '48px'};
+        margin-bottom: ${isMobile ? '10px' : '15px'};
         animation: floatIcon 3s ease-in-out infinite;
     `;
 
-    // Create title
+    // Create title with adjusted size for mobile
     const title = document.createElement('h2');
     title.textContent = pageInfo.title;
     title.style.cssText = `
-        font-size: 24px;
-        margin-bottom: 15px;
+        font-size: ${isMobile ? '20px' : '24px'};
+        margin-bottom: ${iMobile ? '10px' : '15px'};
         color: #00ff00;
         font-weight: bold;
         text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
     `;
 
-    // Create content
+    // Create content with adjusted size for mobile
     const content = document.createElement('p');
     content.textContent = pageInfo.content;
     content.style.cssText = `
-        font-size: 16px;
+        font-size: ${isMobile ? '14px' : '16px'};
         line-height: 1.6;
-        margin-bottom: 20px;
+        margin-bottom: ${iMobile ? '15px' : '20px'};
         color: rgba(255, 255, 255, 0.9);
     `;
 
-    // Add link or contact if available
+    // Add link or contact if available with mobile-optimized styles
     if (pageInfo.link || pageInfo.contact) {
         const link = document.createElement('a');
         link.href = pageInfo.link || `mailto:${pageInfo.contact}`;
@@ -474,7 +484,7 @@ function showInfoCard(pageName) {
         link.target = '_blank';
         link.style.cssText = `
             display: inline-block;
-            padding: 10px 20px;
+            padding: ${isMobile ? '8px 16px' : '10px 20px'};
             background: linear-gradient(45deg, #00ff00, #00cc00);
             color: black;
             text-decoration: none;
@@ -482,6 +492,7 @@ function showInfoCard(pageName) {
             font-weight: bold;
             transition: all 0.3s ease;
             box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+            font-size: ${isMobile ? '14px' : '16px'};
         `;
         link.onmouseover = () => {
             link.style.transform = 'scale(1.05)';
@@ -494,26 +505,30 @@ function showInfoCard(pageName) {
         card.appendChild(link);
     }
 
-    // Add close button
+    // Add close button with mobile-optimized position
     const closeBtn = document.createElement('button');
-    closeBtn.textContent = '×';
+    closeBtn.textContent = isMobile ? 'Close' : '×';
     closeBtn.style.cssText = `
         position: absolute;
-        top: 15px;
-        right: 15px;
-        background: none;
+        ${isMobile ? 'bottom: 10px;' : 'top: 15px;'}
+        ${iMobile ? 'left: 50%;' : 'right: 15px;'}
+        ${iMobile ? 'transform: translateX(-50%);' : ''}
+        background: ${iMobile ? 'linear-gradient(45deg, #00ff00, #00cc00)' : 'none'};
         border: none;
-        color: white;
-        font-size: 24px;
+        color: ${iMobile ? 'black' : 'white'};
+        font-size: ${iMobile ? '16px' : '24px'};
         cursor: pointer;
-        padding: 0;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
+        padding: ${iMobile ? '8px 20px' : '0'};
+        ${iMobile ? 'width: 120px;' : 'width: 30px; height: 30px;'}
+        border-radius: ${iMobile ? '25px' : '50%'};
         transition: all 0.3s ease;
     `;
     closeBtn.onclick = () => {
-        card.style.right = '-400px';
+        if (isMobile) {
+            card.style.bottom = '-100%';
+        } else {
+            card.style.right = '-400px';
+        }
         card.style.opacity = '0';
         setTimeout(() => card.remove(), 500);
     };
@@ -544,7 +559,11 @@ function showInfoCard(pageName) {
     // Add card to document and animate it in
     document.body.appendChild(card);
     setTimeout(() => {
-        card.style.right = '20px';
+        if (isMobile) {
+            card.style.bottom = '0';
+        } else {
+            card.style.right = '20px';
+        }
         card.style.opacity = '1';
     }, 100);
 }
@@ -738,13 +757,39 @@ try {
     }
     animate();
 
-    // Handle window resize
+    // Handle window resize with mobile optimizations
     function onWindowResize() {
+        const isMobile = isMobileDevice();
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
         labelRenderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        // Update controls for mobile
+        controls.panSpeed = isMobile ? 0.3 : 0.5;
+        controls.minDistance = isMobile ? 50 : 100;
+        controls.maxDistance = isMobile ? 1000 : 1500;
+
+        // Adjust any existing info cards
+        const existingCard = document.querySelector('.info-card');
+        if (existingCard) {
+            if (isMobile) {
+                existingCard.style.right = '';
+                existingCard.style.top = '';
+                existingCard.style.transform = 'none';
+                existingCard.style.width = '100%';
+                existingCard.style.bottom = '0';
+                existingCard.style.borderRadius = '20px 20px 0 0';
+            } else {
+                existingCard.style.bottom = '';
+                existingCard.style.right = '20px';
+                existingCard.style.top = '50%';
+                existingCard.style.transform = 'translateY(-50%)';
+                existingCard.style.width = '350px';
+                existingCard.style.borderRadius = '20px';
+            }
+        }
     }
 
     window.addEventListener('resize', onWindowResize);
