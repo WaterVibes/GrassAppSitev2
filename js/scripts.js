@@ -30,17 +30,17 @@ const introMarkerData = {
     }
 };
 
-// Set initial camera position with Y up
+// Set initial camera position with correct orientation (Y is up)
 camera.position.set(
     parseFloat(introMarkerData.camera.x),
-    parseFloat(introMarkerData.camera.y),
+    Math.abs(parseFloat(introMarkerData.camera.y)) + 200, // Ensure positive Y and add height
     parseFloat(introMarkerData.camera.z)
 );
 
-// Set initial camera target with Y up
+// Set initial camera target
 const initialTarget = new THREE.Vector3(
     parseFloat(introMarkerData.target.x),
-    parseFloat(introMarkerData.target.y),
+    0, // Look at ground level
     parseFloat(introMarkerData.target.z)
 );
 camera.lookAt(initialTarget);
@@ -100,9 +100,9 @@ controls.screenSpacePanning = false;
 controls.enablePan = true;
 controls.panSpeed = 0.5;
 controls.minDistance = 100;
-controls.maxDistance = 1500; // Reduced from 2000
-controls.maxPolarAngle = Math.PI / 2.1; // Slightly above horizontal
-controls.minPolarAngle = Math.PI / 6;   // Prevent going too high up
+controls.maxDistance = 1500;
+controls.maxPolarAngle = Math.PI / 2.5; // Prevent going below horizon
+controls.minPolarAngle = 0.1; // Allow looking from above
 controls.target.copy(initialTarget);
 
 // Function to update fog based on camera position
@@ -117,27 +117,22 @@ function updateFog() {
 
 // Function to constrain camera position
 function constrainCamera() {
-    const maxRadius = 1500;  // Reduced from 2000
-    const minHeight = 30;    // Reduced from 50
-    const maxHeight = 500;   // Reduced from 1000
+    const maxRadius = 1500;
+    const minHeight = 100;   // Increased minimum height
+    const maxHeight = 800;   // Adjusted maximum height
 
-    // Get current camera position vector
     const pos = camera.position.clone();
-    
-    // Calculate horizontal distance from center
     const horizontalDist = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
     
-    // If outside maximum radius, bring back within bounds
     if (horizontalDist > maxRadius) {
         const angle = Math.atan2(pos.z, pos.x);
         pos.x = maxRadius * Math.cos(angle);
         pos.z = maxRadius * Math.sin(angle);
     }
     
-    // Constrain height more strictly
+    // Always keep camera above ground
     pos.y = Math.max(minHeight, Math.min(maxHeight, pos.y));
     
-    // Apply constrained position
     camera.position.copy(pos);
 }
 
@@ -350,9 +345,9 @@ try {
             console.log('Model loaded successfully');
             const model = gltf.scene;
             
-            // Ensure model is visible with Y up
+            // Keep model oriented with Y up
             model.scale.set(1, 1, 1);
-            model.rotation.x = -Math.PI / 2; // Rotate model to match marker coordinates
+            model.rotation.set(0, 0, 0); // Reset rotation
             
             // Improve material settings
             model.traverse((node) => {
@@ -362,10 +357,8 @@ try {
                     if (node.material) {
                         node.material.needsUpdate = true;
                         node.material.side = THREE.DoubleSide;
-                        // Ensure materials are not transparent
                         node.material.transparent = false;
                         node.material.opacity = 1;
-                        // Increase material brightness
                         if (node.material.color) {
                             const color = node.material.color;
                             color.r = Math.min(color.r * 1.2, 1);
@@ -378,24 +371,19 @@ try {
             
             scene.add(model);
 
-            // Center and position the model
+            // Center the model
             const box = new THREE.Box3().setFromObject(model);
             const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
             
             model.position.sub(center);
             
-            // Set better initial camera position
             const maxDim = Math.max(size.x, size.y, size.z);
             
             // Update controls based on model size
             controls.target.set(0, 0, 0);
-            controls.maxDistance = maxDim * 0.8; // Reduced from 1.5
-            controls.minDistance = maxDim * 0.1;
-            
-            // Update fog based on model size (very far)
-            scene.fog.near = maxDim * 3;
-            scene.fog.far = maxDim * 4;
+            controls.maxDistance = maxDim * 0.8;
+            controls.minDistance = maxDim * 0.2; // Increased minimum distance
             
             createAllMarkers();
             
