@@ -797,4 +797,15 @@ button:hover {
     .driver-register-card {
         max-width: 100%;
     }
+}
+
+.district-label {
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+    user-select: none;
+}
+
+.district-label:hover {
+    transform: scale(1.1);
 } 
