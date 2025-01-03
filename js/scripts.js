@@ -345,6 +345,9 @@ async function createAllMarkers() {
 
 // Function to handle district selection with camera movement
 async function selectDistrictImpl(districtName) {
+    // Remove any existing info cards when selecting a district
+    removeExistingInfoCard();
+    
     console.log('Looking for district:', districtName);
     const district = districts.find(d => d.name === districtName);
     if (!district) {
@@ -491,35 +494,30 @@ const pageContent = {
     }
 };
 
-// Update showInfoCard function to handle multiple cards
-let currentCardIndex = 0;
-
+// Update showInfoCard function with wider cards and auto-dismiss
 function showInfoCard(pageName) {
+    // Remove any existing info cards first
+    removeExistingInfoCard();
+
     const pageInfo = pageContent[pageName];
     if (!pageInfo || !pageInfo.cards || !pageInfo.cards.length) return;
-
-    // Remove any existing info cards first
-    const existingCard = document.querySelector('.info-card');
-    if (existingCard) {
-        existingCard.remove();
-    }
 
     const cardInfo = pageInfo.cards[currentCardIndex];
     const isMobile = isMobileDevice();
 
-    // Create card container with centered positioning
+    // Create card container with wider dimensions
     const card = document.createElement('div');
     card.className = 'info-card';
     
     card.style.cssText = `
         position: fixed;
         ${isMobile ? 'bottom: -100%;' : 'top: 50%'};
-        ${isMobile ? 'left: 5%; width: 90%;' : 'left: 50%; width: 400px'};
+        ${isMobile ? 'left: 2.5%; width: 95%;' : 'left: 50%; width: 600px'};  // Increased width
         transform: ${isMobile ? 'none' : 'translate(-50%, -50%)'};
         background: rgba(0, 0, 0, 0.9);
         backdrop-filter: blur(10px);
         border-radius: ${isMobile ? '20px 20px 0 0' : '20px'};
-        padding: ${isMobile ? '20px' : '25px'};
+        padding: ${isMobile ? '25px' : '30px'};  // Increased padding
         color: white;
         box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
         border: 1px solid rgba(0, 255, 0, 0.2);
@@ -720,6 +718,18 @@ function showInfoCard(pageName) {
     }
 }
 
+// Add function to remove existing info card
+function removeExistingInfoCard() {
+    const existingCard = document.querySelector('.info-card');
+    if (existingCard) {
+        existingCard.style.opacity = '0';
+        if (isMobileDevice()) {
+            existingCard.style.bottom = '-100%';
+        }
+        setTimeout(() => existingCard.remove(), 500);
+    }
+}
+
 // Update showPageImpl to show info card after camera movement
 async function showPageImpl(pageName) {
     console.log('Looking for page:', pageName);
@@ -848,7 +858,7 @@ function toggleNavPanel() {
     localStorage.setItem('navPanelCollapsed', isCollapsed);
 }
 
-// Update button click handlers to collapse panel
+// Update button click handlers with proper nav panel collapse
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize nav panel collapse functionality
     collapseNavPanel();
@@ -866,7 +876,7 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('click', () => {
             const buttonText = button.textContent.trim();
             const districtMap = {
-                'Inner Harbor': 'innerHarbor',
+                'Baltimore Inner Harbor': 'innerHarbor',
                 'Canton': 'canton',
                 'Fells Point': 'fellsPoint',
                 'Federal Hill': 'federalHill',
@@ -876,11 +886,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (districtName) {
                 console.log('Moving to district:', districtName);
                 window.selectDistrict(districtName);
-                // Collapse nav panel after selection
-                const navPanel = document.querySelector('.nav-container');
-                if (navPanel && !navPanel.classList.contains('collapsed')) {
-                    toggleNavPanel();
-                }
+                // Ensure nav panel collapses
+                toggleNavPanel();
             }
         });
     });
@@ -898,11 +905,8 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             const pageName = pageMap[buttonText] || buttonText;
             window.showPage(pageName);
-            // Collapse nav panel after selection
-            const navPanel = document.querySelector('.nav-container');
-            if (navPanel && !navPanel.classList.contains('collapsed')) {
-                toggleNavPanel();
-            }
+            // Ensure nav panel collapses
+            toggleNavPanel();
         });
     });
 });
