@@ -30,18 +30,18 @@ const introMarkerData = {
     }
 };
 
-// Set initial camera position with correct orientation
+// Set initial camera position with correct orientation (Y is up)
 camera.position.set(
     parseFloat(introMarkerData.camera.x),
-    parseFloat(introMarkerData.camera.y),
-    parseFloat(introMarkerData.camera.z)
+    parseFloat(introMarkerData.camera.z), // Use Z as height
+    parseFloat(introMarkerData.camera.y)  // Use Y as depth
 );
 
 // Set initial camera target
 const initialTarget = new THREE.Vector3(
     parseFloat(introMarkerData.target.x),
-    parseFloat(introMarkerData.target.y),
-    parseFloat(introMarkerData.target.z)
+    parseFloat(introMarkerData.target.z), // Use Z as height
+    parseFloat(introMarkerData.target.y)  // Use Y as depth
 );
 camera.lookAt(initialTarget);
 
@@ -102,7 +102,7 @@ controls.panSpeed = 0.5;
 controls.minDistance = 100;
 controls.maxDistance = 1500;
 controls.maxPolarAngle = Math.PI / 2.1; // Prevent going below horizon
-controls.minPolarAngle = Math.PI / 6;   // Prevent going too high
+controls.minPolarAngle = Math.PI / 6;   // Keep camera above map
 controls.target.copy(initialTarget);
 
 // Function to update fog based on camera position
@@ -211,11 +211,11 @@ async function createMarker(data, color = 0x00ff00) {
     const markerMaterial = new THREE.MeshBasicMaterial({ color });
     const marker = new THREE.Mesh(markerGeometry, markerMaterial);
     
-    // Set position from marker data
+    // Set position from marker data with correct orientation
     marker.position.set(
         parseFloat(markerData.subject.x),
-        parseFloat(markerData.subject.y),
-        parseFloat(markerData.subject.z)
+        parseFloat(markerData.subject.z), // Use Z as height
+        parseFloat(markerData.subject.y)  // Use Y as depth
     );
     scene.add(marker);
 
@@ -234,16 +234,16 @@ async function createMarker(data, color = 0x00ff00) {
     labelDiv.onclick = async () => {
         const cameraData = await loadMarkerData(data.cameraFile);
         if (cameraData) {
-            // Create camera position and target vectors
+            // Create camera position and target vectors with correct orientation
             const targetPos = new THREE.Vector3(
                 parseFloat(cameraData.target.x),
-                parseFloat(cameraData.target.y),
-                parseFloat(cameraData.target.z)
+                parseFloat(cameraData.target.z), // Use Z as height
+                parseFloat(cameraData.target.y)  // Use Y as depth
             );
             const cameraPos = new THREE.Vector3(
                 parseFloat(cameraData.camera.x),
-                parseFloat(cameraData.camera.y),
-                parseFloat(cameraData.camera.z)
+                parseFloat(cameraData.camera.z), // Use Z as height
+                parseFloat(cameraData.camera.y)  // Use Y as depth
             );
 
             // Animate camera movement
@@ -297,13 +297,13 @@ async function selectDistrict(districtName) {
         // Create camera position and target vectors
         const targetPos = new THREE.Vector3(
             parseFloat(cameraData.target.x),
-            parseFloat(cameraData.target.y),
-            parseFloat(cameraData.target.z)
+            parseFloat(cameraData.target.z), // Use Z as height
+            parseFloat(cameraData.target.y)  // Use Y as depth
         );
         const cameraPos = new THREE.Vector3(
             parseFloat(cameraData.camera.x),
-            parseFloat(cameraData.camera.y),
-            parseFloat(cameraData.camera.z)
+            parseFloat(cameraData.camera.z), // Use Z as height
+            parseFloat(cameraData.camera.y)  // Use Y as depth
         );
 
         // Animate camera movement
@@ -345,17 +345,14 @@ try {
             console.log('Model loaded successfully');
             const model = gltf.scene;
             
-            // Set model orientation
+            // Set model orientation to match the top-down view
             model.scale.set(1, 1, 1);
-            model.rotation.x = -Math.PI / 2; // Rotate model to match marker coordinates
+            model.rotation.x = Math.PI / 2; // Rotate to match the correct orientation
             
             // Center the model
             const box = new THREE.Box3().setFromObject(model);
             const center = box.getCenter(new THREE.Vector3());
             model.position.sub(center);
-            
-            // Ensure model is at ground level
-            model.position.y = 0;
             
             scene.add(model);
 
