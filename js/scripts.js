@@ -46,7 +46,7 @@ try {
             
             // Hide loading screen
             if (loadingScreen) {
-                loadingScreen.style.display = 'none';
+                loadingScreen.classList.add('hidden');
             }
         },
         (progress) => {
