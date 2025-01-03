@@ -45,11 +45,9 @@ const initialTarget = new THREE.Vector3(
 );
 camera.lookAt(initialTarget);
 
-// Add fog to the scene
+// Add very subtle fog to the scene (only for edges)
 const fogColor = 0x000000;
-const fogNear = 8000;  // Significantly increased
-const fogFar = 12000;  // Significantly increased
-scene.fog = new THREE.Fog(fogColor, fogNear, fogFar);
+scene.fog = new THREE.Fog(fogColor, 15000, 20000);  // Very far fog
 
 // Initialize renderer
 renderer = new THREE.WebGLRenderer({ 
@@ -74,31 +72,23 @@ labelRenderer.domElement.style.top = '0';
 labelRenderer.domElement.style.pointerEvents = 'auto';
 document.body.appendChild(labelRenderer.domElement);
 
-// Add lights with adjusted settings
-const ambientLight = new THREE.AmbientLight(0xffffff, 1.0); // Full intensity
+// Add lights for better visibility
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
 scene.add(ambientLight);
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5); // Increased intensity
-directionalLight.position.set(2000, 2000, 2000);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+directionalLight.position.set(1000, 1000, 1000);
 directionalLight.castShadow = true;
-directionalLight.shadow.mapSize.width = 4096; // Increased shadow resolution
-directionalLight.shadow.mapSize.height = 4096;
-directionalLight.shadow.camera.near = 1;
-directionalLight.shadow.camera.far = 10000;
-directionalLight.shadow.camera.left = -2000;
-directionalLight.shadow.camera.right = 2000;
-directionalLight.shadow.camera.top = 2000;
-directionalLight.shadow.camera.bottom = -2000;
 scene.add(directionalLight);
 
-// Add a second directional light from another angle
-const directionalLight2 = new THREE.DirectionalLight(0xffffff, 1.0);
-directionalLight2.position.set(-2000, 2000, -2000);
-scene.add(directionalLight2);
+// Add point lights at key positions
+const pointLight1 = new THREE.PointLight(0xffffff, 1, 2000);
+pointLight1.position.set(500, 500, 500);
+scene.add(pointLight1);
 
-// Increase hemisphere light intensity
-const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.0);
-scene.add(hemisphereLight);
+const pointLight2 = new THREE.PointLight(0xffffff, 1, 2000);
+pointLight2.position.set(-500, 500, -500);
+scene.add(pointLight2);
 
 // Initialize controls with adjusted constraints
 controls = new OrbitControls(camera, renderer.domElement);
@@ -358,21 +348,28 @@ try {
             console.log('Model loaded successfully');
             const model = gltf.scene;
             
-            // Adjust model scale if needed
+            // Ensure model is visible
             model.scale.set(1, 1, 1);
-            
-            // Ensure proper rotation
             model.rotation.x = -Math.PI / 2;
             
-            // Enable shadows for the model
+            // Improve material settings
             model.traverse((node) => {
                 if (node.isMesh) {
                     node.castShadow = true;
                     node.receiveShadow = true;
-                    // Improve material settings
                     if (node.material) {
                         node.material.needsUpdate = true;
                         node.material.side = THREE.DoubleSide;
+                        // Ensure materials are not transparent
+                        node.material.transparent = false;
+                        node.material.opacity = 1;
+                        // Increase material brightness
+                        if (node.material.color) {
+                            const color = node.material.color;
+                            color.r = Math.min(color.r * 1.2, 1);
+                            color.g = Math.min(color.g * 1.2, 1);
+                            color.b = Math.min(color.b * 1.2, 1);
+                        }
                     }
                 }
             });
@@ -384,22 +381,19 @@ try {
             const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
             
-            // Adjust model position
             model.position.sub(center);
             
             // Set better initial camera position
             const maxDim = Math.max(size.x, size.y, size.z);
-            camera.position.set(maxDim * 0.4, maxDim * 0.3, maxDim * 0.4);
-            camera.lookAt(new THREE.Vector3(0, 0, 0));
             
             // Update controls based on model size
             controls.target.set(0, 0, 0);
-            controls.maxDistance = maxDim;
-            controls.minDistance = maxDim * 0.2;
+            controls.maxDistance = maxDim * 1.5;
+            controls.minDistance = maxDim * 0.1;
             
-            // Update fog based on model size
-            scene.fog.near = maxDim * 2;    // Much further
-            scene.fog.far = maxDim * 4;     // Much further
+            // Update fog based on model size (very far)
+            scene.fog.near = maxDim * 3;
+            scene.fog.far = maxDim * 4;
             
             createAllMarkers();
             
