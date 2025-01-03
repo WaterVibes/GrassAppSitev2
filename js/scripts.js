@@ -19,28 +19,6 @@ window.showPage = function(pageName) {
     console.log('Placeholder showPage, will be replaced with full implementation');
 };
 
-window.handleDistrictClick = function(districtName) {
-    // Map the button text to district names
-    const districtMap = {
-        'Baltimore Inner Harbor': 'innerHarbor',
-        'Canton': 'canton',
-        'Fells Point': 'fellsPoint',
-        'Federal Hill': 'federalHill',
-        'Mount Vernon': 'mountVernon'
-    };
-    
-    console.log('Button clicked:', districtName);
-    const mappedName = districtMap[districtName];
-    console.log('Mapped to:', mappedName);
-    
-    if (mappedName) {
-        window.selectDistrict(mappedName);
-    } else {
-        console.error('No mapping found for district:', districtName);
-        console.log('Available mappings:', Object.keys(districtMap));
-    }
-};
-
 // Get loading elements
 const loadingScreen = document.querySelector('.loading-screen');
 const loadingProgress = document.querySelector('.loading-progress');
@@ -318,14 +296,9 @@ async function createAllMarkers() {
 // Function to handle district selection with camera movement
 async function selectDistrictImpl(districtName) {
     console.log('Looking for district:', districtName);
-    console.log('Available districts:', districts.map(d => d.name));
-    
     const district = districts.find(d => d.name === districtName);
     if (!district) {
         console.error('District not found:', districtName);
-        // Try to find a close match
-        const availableNames = districts.map(d => d.name);
-        console.log('Available district names:', availableNames);
         return;
     }
 
@@ -348,10 +321,37 @@ async function selectDistrictImpl(districtName) {
             parseFloat(cameraData.camera.z)
         );
 
-        // Instant camera movement for districts
-        camera.position.copy(cameraPos);
-        controls.target.copy(targetPos);
-        controls.update();
+        // Smooth transition for districts (same as pages)
+        new TWEEN.Tween(camera.position)
+            .to(cameraPos, 1500)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .start();
+
+        new TWEEN.Tween(controls.target)
+            .to(targetPos, 1500)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .start();
+
+        // Add a slight fade effect during transition
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.transition = 'opacity 1.5s';
+        overlay.style.opacity = '0';
+        document.body.appendChild(overlay);
+
+        // Fade in
+        setTimeout(() => { overlay.style.opacity = '1'; }, 0);
+        // Fade out and remove
+        setTimeout(() => {
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 1500);
+        }, 750);
 
     } catch (error) {
         console.error('Error moving camera to district:', districtName, error);
@@ -434,7 +434,20 @@ document.addEventListener('DOMContentLoaded', () => {
     districtButtons.forEach(button => {
         button.addEventListener('click', () => {
             const buttonText = button.textContent.trim();
-            window.handleDistrictClick(buttonText);
+            const districtMap = {
+                'Inner Harbor': 'innerHarbor',
+                'Canton': 'canton',
+                'Fells Point': 'fellsPoint',
+                'Federal Hill': 'federalHill',
+                'Mount Vernon': 'mountVernon'
+            };
+            const districtName = districtMap[buttonText];
+            if (districtName) {
+                console.log('Moving to district:', districtName);
+                window.selectDistrict(districtName);
+            } else {
+                console.error('No mapping found for district button:', buttonText);
+            }
         });
     });
 
