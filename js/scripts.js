@@ -8,6 +8,39 @@ import * as TWEEN from '@tweenjs/tween.js';
 // Global variables
 let scene, camera, renderer, labelRenderer, controls;
 
+// Make functions available globally immediately
+window.selectDistrict = function(districtName) {
+    // This will be replaced with the full implementation once it's defined
+    console.log('Placeholder selectDistrict, will be replaced with full implementation');
+};
+
+window.showPage = function(pageName) {
+    // This will be replaced with the full implementation once it's defined
+    console.log('Placeholder showPage, will be replaced with full implementation');
+};
+
+window.handleDistrictClick = function(districtName) {
+    // Map the button text to district names
+    const districtMap = {
+        'Baltimore Inner Harbor': 'innerHarbor',
+        'Canton': 'canton',
+        'Fells Point': 'fellsPoint',
+        'Federal Hill': 'federalHill',
+        'Mount Vernon': 'mountVernon'
+    };
+    
+    console.log('Button clicked:', districtName);
+    const mappedName = districtMap[districtName];
+    console.log('Mapped to:', mappedName);
+    
+    if (mappedName) {
+        window.selectDistrict(mappedName);
+    } else {
+        console.error('No mapping found for district:', districtName);
+        console.log('Available mappings:', Object.keys(districtMap));
+    }
+};
+
 // Get loading elements
 const loadingScreen = document.querySelector('.loading-screen');
 const loadingProgress = document.querySelector('.loading-progress');
@@ -283,7 +316,7 @@ async function createAllMarkers() {
 }
 
 // Function to handle district selection with camera movement
-async function selectDistrict(districtName) {
+async function selectDistrictImpl(districtName) {
     console.log('Looking for district:', districtName);
     console.log('Available districts:', districts.map(d => d.name));
     
@@ -326,7 +359,7 @@ async function selectDistrict(districtName) {
 }
 
 // Function to show a page with smooth transition
-async function showPage(pageName) {
+async function showPageImpl(pageName) {
     console.log('Looking for page:', pageName);
     const page = pages.find(p => p.name === pageName);
     if (!page) {
@@ -390,41 +423,18 @@ async function showPage(pageName) {
     }
 }
 
-// Make showPage available globally
-window.showPage = showPage;
-
-// Add click handlers to navigation buttons after DOM is loaded
+// After all the scene setup is complete, replace the placeholder functions with their implementations
 document.addEventListener('DOMContentLoaded', () => {
+    // Replace placeholder functions with actual implementations
+    window.selectDistrict = selectDistrictImpl;
+    window.showPage = showPageImpl;
+
     // Handle district buttons
     const districtButtons = document.querySelectorAll('.districts-container button');
     districtButtons.forEach(button => {
         button.addEventListener('click', () => {
-            // Convert button text to match district names in data
-            const buttonText = button.textContent.trim().toLowerCase();
-            let districtName;
-            
-            // Map button text to district names
-            switch(buttonText) {
-                case 'baltimore inner harbor':
-                    districtName = 'innerHarbor';
-                    break;
-                case 'canton':
-                    districtName = 'canton';
-                    break;
-                case 'fells point':
-                    districtName = 'fellsPoint';
-                    break;
-                case 'federal hill':
-                    districtName = 'federalHill';
-                    break;
-                case 'mount vernon':
-                    districtName = 'mountVernon';
-                    break;
-                default:
-                    districtName = buttonText;
-            }
-            
-            selectDistrict(districtName);
+            const buttonText = button.textContent.trim();
+            window.handleDistrictClick(buttonText);
         });
     });
 
@@ -432,29 +442,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageButtons = document.querySelectorAll('.pages-container button');
     pageButtons.forEach(button => {
         button.addEventListener('click', () => {
-            // Convert button text to match page names in data
-            const buttonText = button.textContent.trim().toLowerCase();
-            let pageName;
-            
-            // Map button text to page names
-            switch(buttonText) {
-                case 'about us':
-                    pageName = 'aboutUs';
-                    break;
-                case 'medical patient':
-                    pageName = 'medicalPatient';
-                    break;
-                case 'partner with us':
-                    pageName = 'partnerWithUs';
-                    break;
-                case 'delivery driver':
-                    pageName = 'deliveryDriver';
-                    break;
-                default:
-                    pageName = buttonText;
-            }
-            
-            showPage(pageName);  // Use showPage for pages instead of selectDistrict
+            const buttonText = button.textContent.trim();
+            const pageMap = {
+                'About Us': 'aboutUs',
+                'Medical Patient': 'medicalPatient',
+                'Partner With Us': 'partnerWithUs',
+                'Delivery Driver': 'deliveryDriver'
+            };
+            const pageName = pageMap[buttonText] || buttonText;
+            window.showPage(pageName);
         });
     });
 });
