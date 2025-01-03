@@ -14,9 +14,42 @@ const loadingProgress = document.querySelector('.loading-progress');
 
 // Initialize scene and camera
 scene = new THREE.Scene();
-camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 5000);
-camera.position.set(0, 2000, 3000);
-camera.lookAt(0, 0, 0);
+camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000);
+
+// Set initial camera position from intro marker
+const introMarkerData = {
+    camera: {
+        x: "196.97",
+        y: "156.96",
+        z: "630.37"
+    },
+    target: {
+        x: "191.44",
+        y: "154.81",
+        z: "622.32"
+    }
+};
+
+// Set initial camera position from intro marker
+camera.position.set(
+    parseFloat(introMarkerData.camera.x),
+    parseFloat(introMarkerData.camera.y),
+    parseFloat(introMarkerData.camera.z)
+);
+
+// Set initial camera target
+const initialTarget = new THREE.Vector3(
+    parseFloat(introMarkerData.target.x),
+    parseFloat(introMarkerData.target.y),
+    parseFloat(introMarkerData.target.z)
+);
+camera.lookAt(initialTarget);
+
+// Add fog to the scene
+const fogColor = 0x000000;
+const fogNear = 3000;
+const fogFar = 6000;
+scene.fog = new THREE.Fog(fogColor, fogNear, fogFar);
 
 // Initialize renderer
 renderer = new THREE.WebGLRenderer({ 
@@ -41,27 +74,75 @@ labelRenderer.domElement.style.top = '0';
 labelRenderer.domElement.style.pointerEvents = 'auto';
 document.body.appendChild(labelRenderer.domElement);
 
-// Initialize controls
+// Add lights with adjusted settings
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); // Increased ambient light
+scene.add(ambientLight);
+
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2); // Increased intensity
+directionalLight.position.set(2000, 2000, 2000);
+directionalLight.castShadow = true;
+directionalLight.shadow.mapSize.width = 4096; // Increased shadow resolution
+directionalLight.shadow.mapSize.height = 4096;
+directionalLight.shadow.camera.near = 1;
+directionalLight.shadow.camera.far = 10000;
+directionalLight.shadow.camera.left = -2000;
+directionalLight.shadow.camera.right = 2000;
+directionalLight.shadow.camera.top = 2000;
+directionalLight.shadow.camera.bottom = -2000;
+scene.add(directionalLight);
+
+// Add hemisphere light for better ambient lighting
+const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
+scene.add(hemisphereLight);
+
+// Initialize controls with adjusted constraints
 controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-controls.maxDistance = 5000;
-controls.minDistance = 100;
-controls.maxPolarAngle = Math.PI / 2;
-controls.target.set(0, 0, 0);
+controls.screenSpacePanning = false;
+controls.enablePan = true;
+controls.panSpeed = 0.5;
+controls.minDistance = 100;  // Reduced minimum distance
+controls.maxDistance = 2000; // Reduced maximum distance
+controls.maxPolarAngle = Math.PI / 1.5; // Allow more downward angle
+controls.minPolarAngle = 0;   // Allow full upward rotation
+controls.target.copy(initialTarget); // Set control target to match camera target
 
-// Add lights
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-scene.add(ambientLight);
+// Function to update fog based on camera position
+function updateFog() {
+    const distanceToCenter = camera.position.length();
+    const maxDistance = controls.maxDistance;
+    
+    // Adjust fog density based on camera distance
+    scene.fog.near = Math.max(fogNear * (distanceToCenter / maxDistance), 500);
+    scene.fog.far = Math.min(fogFar * (distanceToCenter / maxDistance), maxDistance);
+}
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-directionalLight.position.set(1000, 1000, 1000);
-directionalLight.castShadow = true;
-directionalLight.shadow.mapSize.width = 2048;
-directionalLight.shadow.mapSize.height = 2048;
-directionalLight.shadow.camera.near = 0.1;
-directionalLight.shadow.camera.far = 5000;
-scene.add(directionalLight);
+// Function to constrain camera position
+function constrainCamera() {
+    const maxRadius = 2000;  // Reduced maximum distance from center
+    const minHeight = 50;    // Reduced minimum height
+    const maxHeight = 1000;  // Reduced maximum height
+
+    // Get current camera position vector
+    const pos = camera.position.clone();
+    
+    // Calculate horizontal distance from center
+    const horizontalDist = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
+    
+    // If outside maximum radius, bring back within bounds
+    if (horizontalDist > maxRadius) {
+        const angle = Math.atan2(pos.z, pos.x);
+        pos.x = maxRadius * Math.cos(angle);
+        pos.z = maxRadius * Math.sin(angle);
+    }
+    
+    // Constrain height more strictly
+    pos.y = Math.max(minHeight, Math.min(maxHeight, pos.y));
+    
+    // Apply constrained position
+    camera.position.copy(pos);
+}
 
 // District markers with their camera positions
 const districts = [
@@ -223,40 +304,53 @@ try {
         modelPath,
         (gltf) => {
             console.log('Model loaded successfully');
-            
-            // Add the model to the scene
             const model = gltf.scene;
             
-            // Scale the model up
+            // Adjust model scale if needed
             model.scale.set(1, 1, 1);
             
-            // Rotate the model if needed
-            model.rotation.x = -Math.PI / 2; // Rotate 90 degrees around X axis
+            // Ensure proper rotation
+            model.rotation.x = -Math.PI / 2;
+            
+            // Enable shadows for the model
+            model.traverse((node) => {
+                if (node.isMesh) {
+                    node.castShadow = true;
+                    node.receiveShadow = true;
+                    // Improve material settings
+                    if (node.material) {
+                        node.material.needsUpdate = true;
+                        node.material.side = THREE.DoubleSide;
+                    }
+                }
+            });
             
             scene.add(model);
 
-            // Center the model
+            // Center and position the model
             const box = new THREE.Box3().setFromObject(model);
             const center = box.getCenter(new THREE.Vector3());
-            model.position.sub(center);
-
-            // Log model information
-            console.log('Model bounds:', {
-                min: box.min,
-                max: box.max,
-                center: center
-            });
-
-            // Set camera position based on model bounds
             const size = box.getSize(new THREE.Vector3());
-            const maxDim = Math.max(size.x, size.y, size.z);
-            camera.position.set(maxDim, maxDim, maxDim);
-            camera.lookAt(center);
-            controls.target.copy(center);
-
-            createAllMarkers(); // Add all markers after model is loaded
             
-            // Hide loading screen
+            // Adjust model position
+            model.position.sub(center);
+            
+            // Set better initial camera position
+            const maxDim = Math.max(size.x, size.y, size.z);
+            camera.position.set(maxDim * 0.4, maxDim * 0.3, maxDim * 0.4);
+            camera.lookAt(new THREE.Vector3(0, 0, 0));
+            
+            // Update controls based on model size
+            controls.target.set(0, 0, 0);
+            controls.maxDistance = maxDim;
+            controls.minDistance = maxDim * 0.2;
+            
+            // Update fog based on model size
+            scene.fog.near = maxDim * 0.7;
+            scene.fog.far = maxDim * 1.2;
+            
+            createAllMarkers();
+            
             if (loadingScreen) {
                 loadingScreen.classList.add('hidden');
             }
@@ -284,6 +378,11 @@ try {
         requestAnimationFrame(animate);
         controls.update();
         TWEEN.update();
+        
+        // Apply constraints
+        constrainCamera();
+        updateFog();
+        
         renderer.render(scene, camera);
         labelRenderer.render(scene, camera);
     }
